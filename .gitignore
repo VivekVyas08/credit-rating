@@ -19,6 +19,29 @@
 !/tools/
 !/.claude/
 
+# --- authored knowledge: conventions files + Docs (added on request) ---
+# Only the project's OWN authored documents are re-included; the agencies' copyrighted
+# corpus and corpus dumps/scratch stay out.
+!/ICRA_CONVENTIONS.md
+!/ICRA_BANKS_NBFC_CONVENTIONS.md
+
+# CRISIL/ and CareEdge/ are data folders: re-include ONLY their top-level authored .md
+# (conventions, README, audit notes) - never their Methodology/Report/KB subfolders.
+!/CRISIL/
+/CRISIL/*
+!/CRISIL/*.md
+!/CareEdge/
+/CareEdge/*
+!/CareEdge/*.md
+
+# Docs/ is mostly authored analysis, but holds a corpus dump, concatenated corpus
+# chunks and scratch that must stay out.
+!/Docs/
+/Docs/careedge_corpus.json
+/Docs/corpus_review/merged/
+/Docs/corpus_review/tmp_findings_icra/
+/Docs/corpus_review/tmp_findings_ce1/
+
 # --- within the tracked trees, still drop caches, machine-local prefs, logs and secrets ---
 __pycache__/
 *.pyc

@@ -1,0 +1,30 @@
+945~Covered Bonds, Rating Methodology, Feb 2023 (Archived).md
+946~Roads (Annuity), Rating Methodology, Apr 2025.md
+947~Tea, Rating Methodology, Apr 2025.md
+950~Securitisation Transactions, Rating Methodology, Jun 2025.md
+951~Rice Mills, Rating Methodology, Jun 2025.md
+952~Mining, Rating Methodology, Jun 2025.md
+953~Iron & Steel, Rating Methodology, Jun 2025.md
+954~Passenger Cars, Rating Methodology, Jun 2025.md
+955~Refining and Marketing, Rating Methodology, Jun 2025.md
+957~Telecom Services, Rating Methodology, Jul 2025.md
+958~Telecom Towers, Rating Methodology, Jul 2025.md
+959~City Gas Distribution, Rating Methodology, July 2025.md
+960~Corporate Credit Rating Methodology, Jul 2025.md
+961~Foreign domiciled support provider, Rating Approach, Jul 2025.md
+962~Explicit Third-Party Support, Rating Approach, Jul 2025.md
+963~Implicit Parent or Group Support, Rating Methodology, Jul 2025.md
+988~IT (Software & Services), Rating Methodology, Jul 2025.md
+989~Hotels, Rating Methodology, Jul 2025.md
+990~Retail, Rating Methodology, Jul 2025.md
+991~Power (Solar and Wind), Rating Methodology, Jul 2025.md
+992~RATING METHODOLOGY - INFRASTRUCTURE INVESTMENT TRUSTS (InvITs).md
+993~Oil Exploration & Production, Rating Methodology, Aug 2025.md
+994~Ports, Rating Methodology, Aug 2025.md
+995~Structural Features, Rating Methodology, Sep 2025.md
+996~Cut & Polished Diamonds, Rating Methodology, Sep 2025.md
+997~Footwear, Rating Methodology, Sep 2025.md
+998~Hybrid Instruments, Rating Methodology, Nov 2025.md
+999~Power (Distribution), Rating Methodology, Nov 2025.md
+ICRA's rating process.md
+mapping.md

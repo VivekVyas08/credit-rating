@@ -1,0 +1,198 @@
+[
+ {
+  "agency": "CareEdge",
+  "kind": "methodology",
+  "dir": "CareEdge/Methodology",
+  "name": "CareEdge_methodology_01",
+  "n": 77
+ },
+ {
+  "agency": "CareEdge",
+  "kind": "reports",
+  "dir": "CareEdge/Report for Reference",
+  "name": "CareEdge_reports_02",
+  "n": 90
+ },
+ {
+  "agency": "CareEdge",
+  "kind": "reports",
+  "dir": "CareEdge/Report for Reference",
+  "name": "CareEdge_reports_03",
+  "n": 90
+ },
+ {
+  "agency": "CareEdge",
+  "kind": "reports",
+  "dir": "CareEdge/Report for Reference",
+  "name": "CareEdge_reports_04",
+  "n": 90
+ },
+ {
+  "agency": "CareEdge",
+  "kind": "reports",
+  "dir": "CareEdge/Report for Reference",
+  "name": "CareEdge_reports_05",
+  "n": 90
+ },
+ {
+  "agency": "CareEdge",
+  "kind": "reports",
+  "dir": "CareEdge/Report for Reference",
+  "name": "CareEdge_reports_06",
+  "n": 90
+ },
+ {
+  "agency": "CareEdge",
+  "kind": "reports",
+  "dir": "CareEdge/Report for Reference",
+  "name": "CareEdge_reports_07",
+  "n": 90
+ },
+ {
+  "agency": "CareEdge",
+  "kind": "reports",
+  "dir": "CareEdge/Report for Reference",
+  "name": "CareEdge_reports_08",
+  "n": 90
+ },
+ {
+  "agency": "CareEdge",
+  "kind": "reports",
+  "dir": "CareEdge/Report for Reference",
+  "name": "CareEdge_reports_09",
+  "n": 90
+ },
+ {
+  "agency": "CareEdge",
+  "kind": "reports",
+  "dir": "CareEdge/Report for Reference",
+  "name": "CareEdge_reports_10",
+  "n": 86
+ },
+ {
+  "agency": "ICRA",
+  "kind": "methodology",
+  "dir": "Methodology",
+  "name": "ICRA_methodology_01",
+  "n": 90
+ },
+ {
+  "agency": "ICRA",
+  "kind": "methodology",
+  "dir": "Methodology",
+  "name": "ICRA_methodology_02",
+  "n": 30
+ },
+ {
+  "agency": "ICRA",
+  "kind": "reports",
+  "dir": "Report for Reference",
+  "name": "ICRA_reports_03",
+  "n": 90
+ },
+ {
+  "agency": "ICRA",
+  "kind": "reports",
+  "dir": "Report for Reference",
+  "name": "ICRA_reports_04",
+  "n": 90
+ },
+ {
+  "agency": "ICRA",
+  "kind": "reports",
+  "dir": "Report for Reference",
+  "name": "ICRA_reports_05",
+  "n": 90
+ },
+ {
+  "agency": "ICRA",
+  "kind": "reports",
+  "dir": "Report for Reference",
+  "name": "ICRA_reports_06",
+  "n": 90
+ },
+ {
+  "agency": "ICRA",
+  "kind": "reports",
+  "dir": "Report for Reference",
+  "name": "ICRA_reports_07",
+  "n": 90
+ },
+ {
+  "agency": "ICRA",
+  "kind": "reports",
+  "dir": "Report for Reference",
+  "name": "ICRA_reports_08",
+  "n": 90
+ },
+ {
+  "agency": "ICRA",
+  "kind": "reports",
+  "dir": "Report for Reference",
+  "name": "ICRA_reports_09",
+  "n": 90
+ },
+ {
+  "agency": "ICRA",
+  "kind": "reports",
+  "dir": "Report for Reference",
+  "name": "ICRA_reports_10",
+  "n": 69
+ },
+ {
+  "agency": "CRISIL",
+  "kind": "methodology",
+  "dir": "CRISIL/Methodology",
+  "name": "CRISIL_methodology_01",
+  "n": 20
+ },
+ {
+  "agency": "CRISIL",
+  "kind": "reports",
+  "dir": "CRISIL/Report for Reference",
+  "name": "CRISIL_reports_02",
+  "n": 90
+ },
+ {
+  "agency": "CRISIL",
+  "kind": "reports",
+  "dir": "CRISIL/Report for Reference",
+  "name": "CRISIL_reports_03",
+  "n": 90
+ },
+ {
+  "agency": "CRISIL",
+  "kind": "reports",
+  "dir": "CRISIL/Report for Reference",
+  "name": "CRISIL_reports_04",
+  "n": 90
+ },
+ {
+  "agency": "CRISIL",
+  "kind": "reports",
+  "dir": "CRISIL/Report for Reference",
+  "name": "CRISIL_reports_05",
+  "n": 90
+ },
+ {
+  "agency": "CRISIL",
+  "kind": "reports",
+  "dir": "CRISIL/Report for Reference",
+  "name": "CRISIL_reports_06",
+  "n": 90
+ },
+ {
+  "agency": "CRISIL",
+  "kind": "reports",
+  "dir": "CRISIL/Report for Reference",
+  "name": "CRISIL_reports_07",
+  "n": 90
+ },
+ {
+  "agency": "CRISIL",
+  "kind": "reports",
+  "dir": "CRISIL/Report for Reference",
+  "name": "CRISIL_reports_08",
+  "n": 73
+ }
+]

@@ -1,0 +1,90 @@
+1.md
+1000~Power (Thermal), Rating Methodology, Nov 2025.md
+1001~Power (Transmission), Rating Methodology, Nov 2025.md
+1002~Roads (Hybrid Annuity), Rating Methodology, Nov 2025.md
+1003~NBFCs, Rating Methodology, Dec 2025.md
+1004~Sugar, Rating Methodology, Dec 2025.md
+1005~Tractors, Rating Methodology, Dec 2025.md
+1006~Commercial Vehicles, Rating Methodology, Dec 2025.md
+1007~Print Media, Rating Methodology, Jan 2026.md
+1008~Roads (BOT Toll), Rating Methodology, Jan 2026.md
+1009~TV Broadcasting, Rating Methodology, Jan 2026.md
+1010~Cement, Rating Methodology, Feb 2026.md
+1011~Pharmaceuticals, Rating Methodology, Feb 2026.md
+1012~FMCG, Rating Methodology, Feb 2026.md
+1013~Higher Education, Rating Methodology, Feb 2026.md
+1014~Rating Approach, Liquidity Analysis (Non-Financial Sector), Mar 2026.md
+1015~Fertilisers, Rating Methodology, Mar 2026.md
+1016~Non-Ferrous Metals, Rating Methodology, Mar 2026.md
+1017~Textiles (Spinning), Rating Methodology, Mar 2026.md
+1018~Jewellery-Retail, Rating Methodology, Mar 2026.md
+1019~Airports, Rating Methodology, May 2026.md
+1020~Realty (Leasing), Rating Methodology, May 2026.md
+1021~Expected Loss, Rating Methodology, May 2026.md
+1022~Mutual Funds, Rating Methodology, June 2026.md
+1023~Automobile Dealers, Rating Methodology, Jun 2026.md
+1024~Textiles (Apparels), Rating Methodology, Jun 2026.md
+1025~Textiles (Fabric), Rating Methodology, Jun 2026.md
+1026~Chemicals, Rating Methodology, Jun 2026.md
+107~Policy on Provisional Ratings, Sep 2022.md
+110~ICRA Policy on Rating Outlook and Rating Watch, Dec 2022.md
+112~Policy for Review of Ratings_Feb 2023.md
+129~ICRA Confidentiality Policy_October 2024.md
+130~ICRA Policy on Outsourcing - October 2024_Final.md
+132~Policy in respect of non-cooperation by a rated entity, Jan 2025.md
+134~Policy on Default Recognition, Jan 2025.md
+135~Functioning of Rating Committee_April 2025.md
+136~ICRA Gift Entertainment Anti-Bribery Policy_May 2025_FINAL.md
+138~ICRA Complexity Indicator, Dec 2025.md
+139~Guidelines - Disclosure on Managing Conflict of Interest - Jan 2026.md
+140~Policy on Withdrawal of Ratings, Mar 2026.md
+16_AACRA.md
+2.md
+3.md
+368~Paper, Rating Methodology, Nov 2015 (Archived).md
+384~Trading Companies, Rating Methodology, 2012.md
+4.md
+415~Commercial Papers, Rating Methodology (Archived).md
+418~Issuer Rating Methodology, Jul 2005.md
+49~Standard operating procedure for monitoring and recognition of defaults.md
+5.md
+50~Standardized and Uniform PD Benchmarks, Dec 2019.md
+6.md
+651~Housing Finance Companies, Rating Methodology, Sep 2019 (Archived).md
+684~Insurance Hybrids, Rating Methodology, Jun 2020 (Archived).md
+68~Periodicity of review of rating methodology, Feb 2020.md
+7.md
+712~IT-Hardware-related Services, Rating Methodology, April 2021 (Archived).md
+8.md
+809~Edible Oil, Rating Methodology, Jul 2022.md
+810~Shipping, Rating Methodology, Jul 2022.md
+811~Diagnostic Service Providers, Rating Methodology, Jul 2022.md
+817~Partial Guarantee, Rating Methodology, Sep 2022.md
+824~Alternative Investment Funds, Rating Methodology, Nov 2022.md
+830~Capital Protection-Oriented Funds, Rating Methodology, Nov 2022 (Archived).md
+831~Pooled Loan Issuances, Rating Methodology, Nov 2022.md
+835~Urban Local Bodies, Rating Methodology, Dec 2022.md
+852~Wind Power Producers, Rating Methodology, Jul 2023 (Archived).md
+892~Oilfield Services, Rating Methodology, Nov 2021 (Archived).md
+904~Media (Films), Rating Methodology, Jan 2022 (Archived).md
+919~Agrochemicals, Rating Methodology, Jun 2024 (Archived).md
+925~Primary Dealers, Rating Methodology, Jul 2024.md
+926~Stockbroking & Allied Services, Rating Methodology, Aug 2024.md
+927~Rating Approach, Financial Ratio Analysis, Sep 2024.md
+928~Hospitals, Rating Methodology, Sep 2024.md
+929~Banks & Financial Institutions, Rating Methodology, Oct 2024.md
+930~Construction, Rating Methodology, Oct 2024.md
+931~Auto Components, Rating Methodology, Oct 2024.md
+932~Real Estate Investment Trusts, Rating Methodology, Nov 2024.md
+933~Real Estate, Rating Methodology, Nov 2024.md
+934~Rating Approach, Consolidation, Nov 2024.md
+935~Construction Vehicles, Rating Methodology, Nov 2024.md
+936~General Insurance, Rating Methodology, Nov 2024.md
+937~Life Insurance, Rating Methodology, Nov 2024.md
+938~Project Finance, Rating Methodology, Nov 2024.md
+939~State Governments, Rating Methodology, Dec 2024.md
+940~Collateralised Debt Obligations, Rating Methodology, Dec 2024.md
+941~Investment Companies, Rating Methodology, Jan 2025.md
+942~Two Wheelers, Rating Methodology, Jan 2025.md
+943~Passenger Road Transport, Rating Methodology, Feb 2025.md
+944~Security Receipts, Rating Methodology, Feb 2025.md
