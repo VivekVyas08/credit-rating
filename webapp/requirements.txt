@@ -1,0 +1,10 @@
+flask>=3.0
+markdown>=3.5
+pymupdf>=1.24
+pymupdf4llm>=0.0.17
+python-docx>=1.1
+openpyxl>=3.1
+# Optional: enables OCR of scanned/image PDF pages during upload conversion. The app still
+# runs and converts text-based PDFs without these; scanned pages fall back to plain extraction.
+pytesseract>=0.3
+Pillow>=10.0

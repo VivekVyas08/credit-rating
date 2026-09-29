@@ -1,0 +1,11 @@
+{
+  "_comment": "Selectable models for the rating engine and the Settings dropdown. Edit here to add/rename a model or change a label - no Python change needed. 'default' must be a key of 'models'. If this file is missing or malformed, rate_engine.py falls back to a built-in copy so the engine never breaks.",
+  "default": "claude-opus-5-5",
+  "models": {
+    "claude-opus-5-5": "Opus 5.5 - default; strongest judgement",
+    "claude-fable-5-1": "Fable 5.1 - most capable; slowest and dearest",
+    "claude-opus-4-8": "Opus 4.8 - previous Opus generation",
+    "claude-sonnet-5": "Sonnet 5 - cheaper, good for bulk re-runs",
+    "claude-haiku-4-5-20251001": "Haiku 4.5 - fastest/cheapest; screening only, not a rating view"
+  }
+}

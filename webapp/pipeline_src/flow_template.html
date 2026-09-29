@@ -1,0 +1,171 @@
+<title>Credit Rating Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<style>
+  :root {
+    --ground: #FBFAF7;
+    --panel: #FFFFFF;
+    --panel-line: #E6E4DC;
+    --ink: #23231F;
+    --muted: #6E6C63;
+    --node: #EDECE5;
+    --node-line: #D3D1C6;
+    --edge: #8A887E;
+    --chip: #FBE7D8;
+    --chip-ink: #7A4A2E;
+    --accent: #B4542F;
+    --decide: #E4E9E1;
+    --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #151513; --panel: #1C1C19; --panel-line: #2E2D29;
+      --ink: #ECEAE3; --muted: #A3A197; --node: #2A2925; --node-line: #45433C;
+      --edge: #8E8C82; --chip: #4A2F21; --chip-ink: #F3C8AE; --accent: #E08A62;
+      --decide: #26302A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #151513; --panel: #1C1C19; --panel-line: #2E2D29;
+    --ink: #ECEAE3; --muted: #A3A197; --node: #2A2925; --node-line: #45433C;
+    --edge: #8E8C82; --chip: #4A2F21; --chip-ink: #F3C8AE; --accent: #E08A62;
+    --decide: #26302A;
+  }
+
+  body { background: var(--ground); color: var(--ink); font-family: var(--sans); line-height: 1.55; }
+  .wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 40px 64px; }
+
+  header { display: grid; gap: 8px; margin-bottom: 36px; }
+  .eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-family: var(--serif); font-weight: 700; font-size: clamp(28px, 4.6vw, 38px); line-height: 1.12; margin: 0; text-wrap: balance; }
+  .lede { max-width: 64ch; color: var(--muted); margin: 0; font-size: 15px; }
+
+  h2 { font-family: var(--serif); font-weight: 700; font-size: 21px; margin: 44px 0 14px; padding-top: 22px; border-top: 1px solid var(--panel-line); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 0 0 14px; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
+  .legend li { display: flex; align-items: center; gap: 8px; }
+  .sw { width: 22px; height: 14px; border-radius: 2px; background: var(--node); border: 1px solid var(--node-line); flex: none; }
+  .sw.mech { border: 1.5px solid var(--accent); }
+  .sw.side { background: transparent; border: 1px dashed var(--edge); }
+  .sw.decide { background: var(--decide); }
+  .sw.loop { height: 0; border: 0; border-top: 1.5px dashed var(--accent); background: none; }
+  .sw.agent { background: var(--panel); border: 1.3px solid var(--accent); }
+
+  figure { margin: 0; }
+  .frame { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 6px; padding: 18px 12px; overflow-x: auto; }
+  .flow { display: block; width: 100%; min-width: 700px; max-width: 940px; height: auto; margin: 0 auto; }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; max-width: 70ch; }
+
+  /* diagram marks - styled from the page so the SVG itself stays self-contained */
+  .flow .n rect { fill: var(--node); stroke: var(--node-line); stroke-width: 1; }
+  .flow .n.mech rect, .flow .d.mech polygon { stroke: var(--accent); stroke-width: 1.6; }
+  .flow .n.side rect { fill: transparent; stroke: var(--edge); stroke-dasharray: 4 3; }
+  .flow .n.decide rect { fill: var(--decide); }
+  .flow .d polygon { fill: var(--node); stroke: var(--node-line); stroke-width: 1; }
+  .flow text { font-family: var(--sans); fill: var(--ink); }
+  .flow .lbl { font-size: 12.5px; }
+  .flow .code { font-family: var(--mono); font-size: 10.5px; fill: var(--muted); letter-spacing: .02em; }
+  .flow .n.mech .code, .flow .d.mech .code { fill: var(--accent); }
+  .flow .e { fill: none; stroke: var(--edge); stroke-width: 1.2; }
+  .flow .e.loop { stroke: var(--accent); stroke-dasharray: 5 4; }
+  .flow .mh { fill: var(--edge); }
+  .flow .mha { fill: var(--accent); }
+  .flow .chip rect { fill: var(--chip); }
+  .flow .chip text { font-size: 11.5px; fill: var(--chip-ink); font-family: var(--mono); }
+  .flow .ph { stroke: var(--panel-line); stroke-width: 1; }
+  .flow .phl { font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em; fill: var(--muted); }
+  /* review-agent rail */
+  .flow .ag rect { fill: var(--panel); stroke: var(--accent); stroke-width: 1.3; }
+  .flow .ag.head rect { fill: var(--decide); stroke-width: 1.8; }
+  .flow .ag .agcode { font-family: var(--mono); font-size: 10.5px; font-weight: 500; fill: var(--accent); letter-spacing: .02em; }
+  .flow .ag .agrole { font-size: 9.5px; fill: var(--muted); }
+  .flow .agspine { fill: none; stroke: var(--accent); stroke-width: 1.3; stroke-dasharray: 5 4; }
+  .flow .agtick { fill: none; stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 3; }
+
+  .tablewrap { overflow-x: auto; border: 1px solid var(--panel-line); border-radius: 6px; background: var(--panel); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 620px; }
+  th, td { text-align: left; vertical-align: top; padding: 11px 14px; border-bottom: 1px solid var(--panel-line); }
+  tr:last-child td { border-bottom: 0; }
+  th { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); background: var(--ground); }
+  td:first-child { font-family: var(--mono); font-size: 12px; white-space: nowrap; color: var(--muted); }
+  .tag { display: inline-block; font-family: var(--mono); font-size: 10.5px; padding: 1px 6px; border-radius: 2px; margin-left: 6px; vertical-align: 1px; }
+  .tag.m { color: var(--accent); border: 1px solid var(--accent); }
+  .tag.j { color: var(--muted); border: 1px solid var(--node-line); }
+  code { font-family: var(--mono); font-size: 12px; }
+
+  .notes { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; max-width: 70ch; }
+  .notes li { padding-left: 14px; border-left: 2px solid var(--panel-line); }
+  .notes strong { font-weight: 600; }
+  .intro { max-width: 70ch; color: var(--muted); margin: 0 0 14px; font-size: 14px; }
+  .howto { margin-top: 18px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Rating process · SOP steps 1–21</span>
+    <h1>Credit rating pipeline</h1>
+    <p class="lede">Twenty-one steps from intake to surveillance, grouped into five phases. Six gates decide whether a case moves forward, loops back to the step that caused the problem, or stops. The rating itself is decided by the committee, not by any step before it.</p>
+  </header>
+
+  <h2>1. Pipeline flow</h2>
+  <ul class="legend">
+    <li><span class="sw"></span>Step</li>
+    <li><span class="sw mech"></span>Mechanical check — a script must pass</li>
+    <li><span class="sw side"></span>Off-path outcome</li>
+    <li><span class="sw decide"></span>Decision point</li>
+    <li><span class="sw loop"></span>Loop back</li>
+    <li><span class="sw agent"></span>Review agent — reviews &amp; fixes its phase</li>
+  </ul>
+  <figure>
+    <div class="frame"><!--SVG--></div>
+    <figcaption>Two gates are enforced by code; the other four are judgment calls, the last of them by an independent reviewer. A failed gate never skips ahead: it halts the case, sends it back to the step that produced the problem, or forces the analyst to argue the divergence in writing before the package can move on. <strong>The left rail adds a review agent to each phase</strong> — it reviews the work done there, finds mistakes and fixes them — while the head agent, <code>rating-chief</code>, re-runs each phase's gate to confirm the fix landed and only signs off on a clean delivery audit.</figcaption>
+  </figure>
+
+  <h2>2. Gates</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Gate</th><th>Question</th><th>What decides it</th><th>If it fails</th></tr></thead>
+      <tbody>
+        <tr><td>G0 · S1a</td><td>Is the information adequate to rate?<span class="tag j">judgment</span></td><td>Document inventory, and a pre-flight search of every file and the reference library before anything is read</td><td>Ask the issuer for the missing documents; if they are not supplied, the case moves to the non-cooperation policy</td></tr>
+        <tr><td>G1 · S3</td><td>Does the methodology's scope statement fit this issuer?<span class="tag j">judgment</span></td><td>The methodology's own scope text, read in full this session</td><td>Drop the file and record why, then re-route. Citing an out-of-scope methodology is a named failure</td></tr>
+        <tr><td>G2 · S6</td><td>Do the tie-outs reconcile, and is coverage measured?<span class="tag m">script</span></td><td><code>compute_ratios.py</code> tie-outs against the source documents, then <code>tieout_mutation.py</code> to find inputs no check would notice</td><td>Fix the extraction, or declare the divergence with its reason. A failing engine produces no rating by any route</td></tr>
+        <tr><td>G3 · S14</td><td>Is the scorecard anchor within ±2 notches of the view?<span class="tag j">judgment</span></td><td>Step 12b scorecard grade against the Step 13 view. Any gap at AA+/AAA or BB-and-below counts</td><td>The workpaper names the qualitative or support factor the scorecard cannot see; the committee resolves it, never by averaging</td></tr>
+        <tr><td>G4 · S17a</td><td>Does the section audit exit zero?<span class="tag m">script</span></td><td><code>check_sections.py</code>: mandatory sections by agency, plus quality probes on ESG data, liquidity, rated amounts, absence claims and verbatim reuse</td><td>Fix the draft and re-run. A non-zero exit blocks delivery</td></tr>
+        <tr><td>G5 · S17b</td><td>Does an independent reviewer sign off?<span class="tag j">four-eyes</span></td><td>A reviewer separate from the analyst re-ties the numbers and checks methodology fit, basis and disclosures</td><td>The case returns to the failing step, not forward</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>3. Review agents</h2>
+  <p class="intro">Each phase has an agent that reviews the work already done there, finds mistakes and fixes them, then proves the fix by re-running that phase's gate. A head agent runs them in order and signs a case off only when the delivery audit is clean.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Agent</th><th>Reviews</th><th>What it checks and fixes</th><th>Confirms with</th></tr></thead>
+      <tbody>
+        <tr><td>rating-chief</td><td>Step 17c<span class="tag m">head</span></td><td>Dispatches the five agents below in order. After each one, it re-runs that phase's gate itself and trusts the gate, not the agent's report. A red gate goes back to the same agent with the failure quoted, up to twice</td><td><code>delivery_audit.py</code> must read READY TO SHARE before sign-off</td></tr>
+        <tr><td>rating-intake</td><td>Steps 1-4<span class="tag m">fixes</span></td><td>Re-runs the pre-flight; checks every document is in the Read Log newest-first, the methodology fits the issuer and the basis matches the agency. Fixes routing, basis and any claim that data is absent when it is not</td><td><code>preflight.py</code></td></tr>
+        <tr><td>rating-ratios</td><td>Steps 5-9<span class="tag m">fixes</span></td><td>Re-checks the extraction: notes used as a single subtotal, figures taken from the cash-flow instead of the note, the wrong total-debt definition for the agency, figures from the wrong year. Fixes the ratio engine</td><td><code>compute_ratios.py</code> with no failing tie-out, <code>tieout_mutation.py</code> at 100%</td></tr>
+        <tr><td>rating-analysis</td><td>Steps 10-15<span class="tag m">fixes</span></td><td>Compares the grade, basis and headline ratios with the agency's own action; checks the scorecard against the rationale, the business-risk gate and the liquidity arithmetic. Fixes the scorecard, forward model and rating view</td><td><code>annotate_scorecard.py</code> reads MATCHES, <code>step14_diff.py</code></td></tr>
+        <tr><td>rating-draft</td><td>Steps 16-17a<span class="tag m">fixes</span></td><td>Traces every figure in the rationale to the engine and its source document; checks mandatory sections, wording reused from the agency's report, and rated-amount attribution. Fixes the rationale</td><td><code>check_sections.py</code> passes</td></tr>
+        <tr><td>rating-reviewer</td><td>Step 17b<span class="tag j">read-only</span></td><td>Re-runs every gate from scratch and reads the whole package without trusting the other agents. Lists each remaining defect, the phase it belongs to and the evidence</td><td>All of the above, re-run independently</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul class="notes howto">
+    <li><strong>Open Claude Code in the ICRA Credit Rating folder.</strong> The agents are defined in <code>.claude/agents/</code> there and are only available to a session started in that folder.</li>
+    <li><strong>Review a whole case:</strong> ask <code>Run the rating-chief sweep on solar</code>, using the case's folder name under <code>Companies/</code>. Start the chief from the main session; an agent cannot start other agents from inside itself.</li>
+    <li><strong>Review one phase:</strong> ask <code>Use rating-ratios to review cemindia-projects-limited</code>, or name any other agent above.</li>
+  </ul>
+
+  <h2>4. Rules that hold across the flow</h2>
+  <ul class="notes">
+    <li><strong>Facts come only from the issuer's documents.</strong> Published reports teach format and calibration; they never supply a figure, a driver or a phrasing.</li>
+    <li><strong>The view forms before the prior report is opened.</strong> Step 13 comes first, Step 14 compares; a rated-amount table may be read earlier only to fill the facility schedule.</li>
+    <li><strong>Every number is computed in code.</strong> The draft copies from the workpaper, and two drift checks at Step 17 re-verify both computed and non-computed figures.</li>
+    <li><strong>The committee makes the rating.</strong> Step 15 is the analyst's proposal; the decision is taken at Step 17c on the full, re-verified package.</li>
+    <li><strong>A rating is monitored, not closed.</strong> A surveillance trigger re-runs the pipeline from intake as a surveillance engagement.</li>
+  </ul>
+</div>

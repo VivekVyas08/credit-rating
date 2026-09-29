@@ -1,0 +1,28 @@
+# This repository tracks the TOOL'S CODE ONLY.
+#
+# Deliberately NOT version-controlled: the reference corpus (the agencies' own
+# copyrighted published rationales), the knowledge base, case data under Companies/,
+# generated workbooks/PDFs, and caches. The project folder is zipped and emailed with
+# deliverables, so confidential and third-party material must stay out of git history.
+#
+# Strategy: ignore everything at the root, then re-include only the code paths. This is
+# a whitelist on purpose - a new top-level data folder is excluded by default, never
+# committed by accident.
+
+/*
+
+# --- re-included: the tool's own code and config ---
+!/.gitignore
+!/CLAUDE.md
+!/UNIFIED_RATING_GUIDE.md
+!/webapp/
+!/tools/
+!/.claude/
+
+# --- within the tracked trees, still drop caches, machine-local prefs, logs and secrets ---
+__pycache__/
+*.pyc
+*.pyo
+*.log
+/webapp/ui_prefs.json
+/.claude/settings.local.json

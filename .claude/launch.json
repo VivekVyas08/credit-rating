@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "rating-webapp",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "C:\\Users\\V V\\Downloads\\Claude\\ICRA Credit Rating\\webapp\\app.py"
+      ],
+      "port": 5050
+    }
+  ]
+}
