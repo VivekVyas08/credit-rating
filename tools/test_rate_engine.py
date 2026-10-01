@@ -453,6 +453,28 @@ def test_ollama_errors():
           "missing required field -> rejected, not shipped")
 
 
+def test_sdk_credential_detection():
+    """sdk_has_credential() reflects a RESOLVED key/token, not just that the client constructed.
+
+    Regression: the old version returned True unconditionally because constructing the SDK client
+    succeeds with no key, so the Settings page claimed a credential the run then could not find.
+    The client is stubbed so the three cases are deterministic and portable.
+    """
+    import anthropic
+    print("\n[13] sdk credential detection")
+    real = anthropic.Anthropic
+    try:
+        anthropic.Anthropic = lambda *a, **k: types.SimpleNamespace(api_key=None, auth_token=None)
+        check(RE.sdk_has_credential() is False,
+              "no resolved key/token -> False (the false positive this fixes)")
+        anthropic.Anthropic = lambda *a, **k: types.SimpleNamespace(api_key="sk-ant-x", auth_token=None)  # publish-scan-ok: stub
+        check(RE.sdk_has_credential() is True, "a resolved api_key -> True")
+        anthropic.Anthropic = lambda *a, **k: types.SimpleNamespace(api_key=None, auth_token="tok")
+        check(RE.sdk_has_credential() is True, "a resolved auth_token -> True")
+    finally:
+        anthropic.Anthropic = real
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -464,7 +486,8 @@ def main():
     for fn in (test_success, test_request_shape, test_refusal, test_bad_json,
                test_api_errors, test_divergence, test_key_handling, test_key_storage,
                test_ui_model_pref,
-               test_ollama_success, test_ollama_request_shape, test_ollama_errors):
+               test_ollama_success, test_ollama_request_shape, test_ollama_errors,
+               test_sdk_credential_detection):
         fn()
     print("\n" + "=" * 78)
     if _failures:

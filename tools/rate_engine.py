@@ -868,19 +868,23 @@ def ui_model():
 
 
 def sdk_has_credential():
-    """True if the Anthropic SDK can authenticate on its own (e.g. an `ant auth login` profile).
+    """True only if the Anthropic SDK actually RESOLVES a credential, without making a request.
 
-    Constructing the client is the only honest test - the SDK's resolution order is its own
-    business and reimplementing it here would drift. It raises when it finds nothing, so the
-    exception IS the answer; no request is made and nothing is billed.
+    The previous version just CONSTRUCTED the client and treated success as proof a credential
+    exists. That was wrong: the modern SDK does not raise on a missing key, it resolves lazily and
+    fails only at request time, so construction ALWAYS succeeded - and the Settings page showed
+    'Credential found' with no usable key at all (the false positive this fixes). The honest,
+    still-free signal is whether the constructed client carries a resolved api_key or auth_token.
+    An exotic lazily-loaded credential could read as absent here, which is the SAFE direction - it
+    tells the user to set a key rather than letting the run fail later with a confusing message.
     """
     try:
         import anthropic
     except ImportError:
         return False
     try:
-        anthropic.Anthropic()
-        return True
+        c = anthropic.Anthropic()
+        return bool(getattr(c, "api_key", None) or getattr(c, "auth_token", None))
     except Exception:                                                     # noqa: BLE001
         return False
 
