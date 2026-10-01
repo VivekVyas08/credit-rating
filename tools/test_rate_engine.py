@@ -347,6 +347,111 @@ def test_ui_model_pref():
         check(RE.UI_PREFS == real, "the real prefs file was never touched")
 
 
+# --------------------------------------------------------------------- ollama stubs (offline)
+class _FakeHTTP:
+    """A urlopen() return value: context-managed, with .read() for json.load()."""
+    def __init__(self, payload):
+        self._b = json.dumps(payload).encode("utf-8")
+
+    def read(self, *a):
+        return self._b
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+OLLAMA_OK = {"message": {"content": json.dumps(VALID)},
+             "prompt_eval_count": 1234, "eval_count": 567}
+
+
+def _ollama(urlopen_impl):
+    """Call engine_ollama with urllib.request.urlopen swapped; capture the request sent."""
+    import urllib.request
+    d, mod, meta = RE.load_case(SLUG)
+    R, n, failures, _ack = RE.run_tieouts(mod)
+    assert not failures, "the real engine must reconcile before these tests mean anything"
+    captured, real = {}, urllib.request.urlopen
+
+    def spy(req, timeout=None):
+        captured["req"] = req
+        return urlopen_impl(req, timeout)
+    urllib.request.urlopen = spy
+    try:
+        out = RE.engine_ollama(SLUG, mod, R, meta, n, "test-model", url="http://localhost:11434")
+    finally:
+        urllib.request.urlopen = real
+    return out, captured.get("req")
+
+
+def test_ollama_success():
+    """A structured Ollama response parses into a complete, OFFLINE rating view."""
+    print("\n[10] ollama success path (offline, stubbed)")
+    out, _req = _ollama(lambda r, t: _FakeHTTP(OLLAMA_OK))
+    check(out.get("available") is True, "result marked available")
+    check(out.get("engine") == "ollama", "engine tagged ollama")
+    check(out.get("long_term_grade") == "AA+", "grade parsed (AA+)")
+    check(out.get("outlook") == "Stable", "outlook parsed")
+    check(out.get("model") == "test-model", "model recorded")
+    check(out.get("usage", {}).get("input_tokens") == 1234, "prompt tokens recorded")
+    check(out.get("usage", {}).get("output_tokens") == 567, "output tokens recorded")
+    for k in RE.SCHEMA["required"]:
+        if k not in out:
+            check(False, "required field carried through: %s" % k)
+            return
+    check(True, "all %d required schema fields present" % len(RE.SCHEMA["required"]))
+
+
+def test_ollama_request_shape():
+    """The request hits /api/chat with SCHEMA as the format, and sends NO documents."""
+    print("\n[11] ollama request shape")
+    _out, req = _ollama(lambda r, t: _FakeHTTP(OLLAMA_OK))
+    check(req.full_url.endswith("/api/chat"), "POSTs to /api/chat")
+    body = json.loads(req.data.decode("utf-8"))
+    check(body["model"] == "test-model", "model in body")
+    check(body["stream"] is False, "non-streaming (one JSON response)")
+    check(body["format"] == RE.SCHEMA, "SCHEMA passed as the structured-output format")
+    check(body["options"]["temperature"] == 0, "temperature 0 for reproducibility")
+    check([m["role"] for m in body["messages"]] == ["system", "user"], "system + user messages")
+    prompt = body["messages"][1]["content"]
+    check("VERIFIED RATIO SUITE" in prompt, "verified ratio suite is sent")
+    # Same guardrail as the API engine: no raw document text may reach the model.
+    leaked = [m for m in ("Integrated Report", "NOTES TO CONSOLIDATED",
+                          "Walker Chandiok", "annual report of the Company") if m in prompt]
+    check(not leaked, "NO source-document text in the prompt (leaked: %s)" % leaked)
+
+
+def test_ollama_errors():
+    """Model-not-pulled, server-down, bad JSON and missing fields all fail cleanly."""
+    print("\n[12] ollama error handling")
+    import io
+    import urllib.error
+
+    def raise_404(r, t):
+        raise urllib.error.HTTPError("http://localhost:11434/api/chat", 404,
+                                     "Not Found", {}, io.BytesIO(b"model not found"))
+    out, _ = _ollama(raise_404)
+    check(out.get("available") is False and "ollama pull" in out.get("reason", ""),
+          "model not pulled -> pull instruction")
+
+    def raise_conn(r, t):
+        raise urllib.error.URLError("Connection refused")
+    out, _ = _ollama(raise_conn)
+    check(out.get("available") is False and "Ollama server" in out.get("reason", ""),
+          "server down -> points at `ollama serve`")
+
+    out, _ = _ollama(lambda r, t: _FakeHTTP({"message": {"content": "not json"}}))
+    check(out.get("available") is False and "not JSON" in out.get("reason", ""),
+          "non-JSON content -> clean parse failure")
+
+    partial = {k: v for k, v in VALID.items() if k != "confidence"}
+    out, _ = _ollama(lambda r, t: _FakeHTTP({"message": {"content": json.dumps(partial)}}))
+    check(out.get("available") is False and "missing required" in out.get("reason", ""),
+          "missing required field -> rejected, not shipped")
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -357,7 +462,8 @@ def main():
     print("=" * 78)
     for fn in (test_success, test_request_shape, test_refusal, test_bad_json,
                test_api_errors, test_divergence, test_key_handling, test_key_storage,
-               test_ui_model_pref):
+               test_ui_model_pref,
+               test_ollama_success, test_ollama_request_shape, test_ollama_errors):
         fn()
     print("\n" + "=" * 78)
     if _failures:

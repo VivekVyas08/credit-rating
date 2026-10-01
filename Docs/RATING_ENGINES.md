@@ -7,7 +7,9 @@ between them. Both remain available; neither replaces the other.
 python tools/rate_engine.py <case-slug>                    # both engines (default)
 python tools/rate_engine.py <case-slug> --engine local     # deterministic only, no key needed
 python tools/rate_engine.py <case-slug> --engine api       # model only
-python tools/rate_engine.py --list-models
+python tools/rate_engine.py <case-slug> --engine ollama     # OFFLINE model view (local model + scorecard)
+python tools/rate_engine.py <case-slug> --engine ollama --ollama-model qwen2.5:14b
+python tools/rate_engine.py --list-models                  # API models + locally-pulled Ollama models
 ```
 
 | | **local** | **api** |
@@ -115,10 +117,36 @@ and reports the API engine as unavailable with instructions.
 
 ## Model selection
 
-`--model` accepts `claude-opus-5` (default), `claude-fable-5`, `claude-opus-4-8`,
-`claude-sonnet-5`, `claude-haiku-4-5`. `--effort low|medium|high|xhigh|max` (default `high`)
-trades cost against depth. Haiku is listed for screening runs and bulk re-checks; it is not a
-model to take a rating view from.
+The API model list lives in `tools/models.json` (edit there to add/rename a model or change a
+label - the CLI `--model` and the web Settings dropdown both read it; current default
+`claude-opus-5-5`). `--effort low|medium|high|xhigh|max` (default `high`) trades cost against
+depth. Haiku is listed for screening runs and bulk re-checks; it is not a model to take a
+rating view from. `python tools/rate_engine.py --list-models` prints the live list.
+
+## Offline model view (`--engine ollama`)
+
+The **ollama** engine is the `api` engine's offline twin: the SAME prompt and SCHEMA, sent to a
+model running locally under [Ollama](https://ollama.com) instead of the Anthropic API. No key,
+no internet, nothing leaves the machine. `--engine ollama` runs it **alongside the local
+scorecard**, so an offline run still shows two independent views and their divergence - the
+offline equivalent of `--engine both`.
+
+```bash
+ollama serve                              # if not already running
+ollama pull qwen2.5:14b                   # one-time (several GB); offline thereafter
+python tools/rate_engine.py <slug> --engine ollama --ollama-model qwen2.5:14b
+```
+
+- `--ollama-model` (or `$OLLAMA_MODEL`) picks the model; `--ollama-url` (or `$OLLAMA_HOST`)
+  points at a non-default server. `--list-models` shows which models are pulled.
+- Structured output is enforced via Ollama's `format` = the rating SCHEMA, so the reply is the
+  same object shape as the API engine's; a model that returns malformed or incomplete JSON is
+  reported unavailable rather than shipped.
+- The hard guardrail below binds it identically: it is handed the verified computed ratios,
+  never the source documents, and the schema admits no financial figure.
+- Determinism caveat: `temperature` is 0, but a local model is not byte-reproducible the way the
+  scorecard is. Treat its view as judgement, like the API engine's - an input to the committee,
+  never the rating itself.
 
 ## Example
 

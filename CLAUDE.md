@@ -699,13 +699,21 @@ Two scripts now hold the enforcement: `preflight.py` (Step 1a, entry gate) and `
 `rate_engine.py` produces a rating outcome two independent ways and reports the gap. Full
 documentation in `Docs/RATING_ENGINES.md`.
 
-    python tools/rate_engine.py <case-slug> [--engine local|api|both] [--model ID] [--effort ...]
+    python tools/rate_engine.py <case-slug> [--engine local|api|ollama|both] [--model ID] [--ollama-model NAME] [--effort ...]
 
   * **local** - the filled Rating_Scorecard workbook evaluated offline through its own formula
     chain. No key, no model, byte-identical every run. This is the Step 12b anchor, made
     runnable.
   * **api** - Claude via the Anthropic Messages API on a selectable model (default
     `claude-opus-5-5`), returning a schema-constrained rating VIEW.
+
+  * **ollama** - a fully OFFLINE model view: the SAME prompt and SCHEMA as `api`, sent to a
+    local model under Ollama instead of the Anthropic API. No key, no internet. `--engine
+    ollama` runs it alongside the local scorecard (the offline equivalent of `both`). Needs the
+    Ollama server running and a model pulled (`ollama pull <model>`); choose it with
+    `--ollama-model` (or $OLLAMA_MODEL). The division-of-labour rule below binds it identically -
+    it receives the verified computed ratios, never the source documents, and its schema admits
+    no financial figure.
 
   * **agent** - selected by entering the sentinel `1234` as the API key (or `--engine agent`).
     Hands the job to a local Claude Code agent that inherits this file, the project skills and

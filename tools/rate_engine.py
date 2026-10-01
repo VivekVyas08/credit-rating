@@ -455,6 +455,81 @@ def engine_api(slug, mod, R, meta, n_tieouts, model, effort, api_key):
     return data
 
 
+# ----------------------------------------------------------- ollama engine (offline model view)
+# The api engine's offline twin. Same prompt, same SCHEMA, same binding contract (it is handed
+# the VERIFIED COMPUTED ratios, never the source documents, and the schema admits no financial
+# figure) - only the backend changes: a model running locally under Ollama instead of the
+# Anthropic API. No key, no internet. Uses stdlib urllib so it adds no dependency. Needs the
+# Ollama server running and the model pulled (`ollama pull <model>`).
+OLLAMA_DEFAULT_URL = os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+OLLAMA_DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.1")
+
+
+def ollama_models(url=OLLAMA_DEFAULT_URL, timeout=4):
+    """Names of models pulled into the local Ollama server, or [] if unreachable."""
+    import urllib.request
+    try:
+        with urllib.request.urlopen(url + "/api/tags", timeout=timeout) as r:
+            return [m["name"] for m in json.load(r).get("models", [])]
+    except Exception:                                                     # noqa: BLE001
+        return []
+
+
+def engine_ollama(slug, mod, R, meta, n_tieouts, model, url=OLLAMA_DEFAULT_URL, timeout=600):
+    import urllib.error
+    import urllib.request
+
+    prompt = build_prompt(slug, mod, R, meta, n_tieouts)
+    body = json.dumps({
+        "model": model,
+        "stream": False,
+        "format": SCHEMA,                 # Ollama structured output - constrains to the schema
+        "options": {"temperature": 0,     # as reproducible as a local model gets
+                    "num_ctx": 8192},      # the ratio table + conventions overflow the 2k default
+        "messages": [{"role": "system", "content": SYSTEM},
+                     {"role": "user", "content": prompt}],
+    }).encode("utf-8")
+    req = urllib.request.Request(url + "/api/chat", data=body,
+                                 headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            out = json.load(resp)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            pulled = ", ".join(ollama_models(url)) or "none"
+            return {"engine": "ollama", "available": False,
+                    "reason": "model %r is not pulled. Run:  ollama pull %s   (pulled: %s)"
+                              % (model, model, pulled)}
+        return {"engine": "ollama", "available": False,
+                "reason": "ollama HTTP %s: %s" % (e.code, e.read().decode("utf-8", "replace")[:300])}
+    except urllib.error.URLError as e:
+        return {"engine": "ollama", "available": False,
+                "reason": "cannot reach the Ollama server at %s (%s). Is `ollama serve` running?"
+                          % (url, e.reason)}
+    except Exception as e:                                                # noqa: BLE001
+        return {"engine": "ollama", "available": False, "reason": "ollama call failed: %s" % e}
+
+    text = (out.get("message") or {}).get("content", "")
+    if not text:
+        return {"engine": "ollama", "available": False,
+                "reason": "empty response (the model may not support structured output)"}
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as e:
+        return {"engine": "ollama", "available": False, "reason": "response was not JSON: %s" % e}
+    missing = [k for k in SCHEMA["required"] if k not in data]
+    if missing:
+        return {"engine": "ollama", "available": False,
+                "reason": "response missing required field(s): %s" % ", ".join(missing)}
+
+    data.update({
+        "engine": "ollama", "available": True, "model": model, "effort": "n/a (local)",
+        "usage": {"input_tokens": out.get("prompt_eval_count"),
+                  "output_tokens": out.get("eval_count")},
+    })
+    return data
+
+
 # ----------------------------------------------------------------------- agent engine
 def find_pending():
     """Every RATING_REQUEST.md / RESEARCH_REQUEST.md still marked PENDING."""
@@ -808,10 +883,12 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("slug", nargs="?", help="case folder name under Companies/")
-    ap.add_argument("--engine", choices=["local", "api", "agent", "both"], default="both",
-                    help="'agent' hands the job to a local Claude Code agent; it is also "
-                         "selected automatically when the key is the sentinel %r"
-                         % AGENT_SENTINEL)
+    ap.add_argument("--engine", choices=["local", "api", "ollama", "agent", "both"],
+                    default="both",
+                    help="'ollama' is a fully OFFLINE model view (local model, no key, no "
+                         "internet) and runs alongside the local scorecard; 'agent' hands the "
+                         "job to a local Claude Code agent, also selected automatically when the "
+                         "key is the sentinel %r" % AGENT_SENTINEL)
     ap.add_argument("--pending", action="store_true",
                     help="agent route: work the pending request queue instead of one case")
     ap.add_argument("--yes", action="store_true",
@@ -825,6 +902,11 @@ def main():
     ap.add_argument("--model", default=ui_model(), choices=sorted(MODELS))
     ap.add_argument("--effort", default="high",
                     choices=["low", "medium", "high", "xhigh", "max"])
+    ap.add_argument("--ollama-model", default=OLLAMA_DEFAULT_MODEL,
+                    help="model for --engine ollama (offline); default %r or $OLLAMA_MODEL"
+                         % OLLAMA_DEFAULT_MODEL)
+    ap.add_argument("--ollama-url", default=OLLAMA_DEFAULT_URL,
+                    help="Ollama server URL (default %r or $OLLAMA_HOST)" % OLLAMA_DEFAULT_URL)
     ap.add_argument("--set-key", action="store_true",
                     help="enter an API key (hidden input) and store it for future runs")
     ap.add_argument("--show-key", action="store_true",
@@ -892,9 +974,17 @@ def main():
         return
 
     if args.list_models:
-        print("Selectable models (--model):\n")
+        print("API models (--engine api --model NAME):\n")
         for m, d in MODELS.items():
-            print("  %-20s %s%s" % (m, d, "   [default]" if m == DEFAULT_MODEL else ""))
+            print("  %-28s %s%s" % (m, d, "   [default]" if m == DEFAULT_MODEL else ""))
+        pulled = ollama_models()
+        print("\nLocal Ollama models (--engine ollama --ollama-model NAME), offline:\n")
+        if pulled:
+            for m in pulled:
+                print("  %s" % m)
+        else:
+            print("  (none pulled, or the Ollama server is not running)")
+            print("  Install models offline with, e.g.:  ollama pull llama3.1")
         return
     key_peek, _ = resolve_key(args)
 
@@ -981,7 +1071,9 @@ def main():
         sys.exit(1)
 
     results = {}
-    if args.engine in ("local", "both"):
+    # 'ollama' pairs the offline model view with the offline scorecard, the way 'both' pairs the
+    # scorecard with the API model - so an offline run still shows two independent views.
+    if args.engine in ("local", "both", "ollama"):
         results["local"] = engine_local(case_dir)
     if args.engine in ("api", "both"):
         key, how = resolve_key(args)
@@ -993,9 +1085,14 @@ def main():
         print("model         : %s (effort %s)" % (args.model, args.effort))
         results["api"] = engine_api(args.slug, mod, R, meta, n_tieouts,
                                     args.model, args.effort, key)
+    if args.engine == "ollama":
+        print("ollama server : %s" % args.ollama_url)
+        print("ollama model  : %s (offline, no key)" % args.ollama_model)
+        results["ollama"] = engine_ollama(args.slug, mod, R, meta, n_tieouts,
+                                          args.ollama_model, args.ollama_url)
 
     print()
-    for name in ("local", "api"):
+    for name in ("local", "api", "ollama"):
         r = results.get(name)
         if not r:
             continue
@@ -1009,7 +1106,9 @@ def main():
             print("       workbook   : %s" % r["workbook"])
             print("       basis      : %s" % r["basis"])
         else:
-            print("API    (%s, effort %s)" % (r["model"], r["effort"]))
+            where = ("%s, effort %s" % (r["model"], r["effort"]) if name == "api"
+                     else "%s, offline" % r["model"])
+            print("%-6s (%s)" % (name.upper(), where))
             print("       grade      : %s (%s)" % (r["long_term_grade"], r["outlook"]))
             print("       short term : %s" % r["short_term_grade"])
             print("       confidence : %s" % r["confidence"])
@@ -1025,23 +1124,27 @@ def main():
             print("       tokens     : in %s / out %s"
                   % (r["usage"]["input_tokens"], r["usage"]["output_tokens"]))
 
-    lo, ap_ = results.get("local", {}), results.get("api", {})
-    if lo.get("available") and ap_.get("available"):
-        gap = notch_gap(lo["long_term"], ap_["long_term_grade"])
+    lo = results.get("local", {})
+    model_res = results.get("api") or results.get("ollama") or {}
+    if lo.get("available") and model_res.get("available"):
+        model_name = model_res.get("engine", "model")
+        gap = notch_gap(lo["long_term"], model_res["long_term_grade"])
         print("-" * 92)
         print("DIVERGENCE")
         if gap == 0:
             print("  none - both routes return %s independently." % lo["long_term"])
         else:
             direction = "weaker" if gap > 0 else "stronger"
-            print("  %d notch(es): scorecard %s, model %s - the model is %s."
-                  % (abs(gap), lo["long_term"], ap_["long_term_grade"], direction))
+            print("  %d notch(es): scorecard %s, %s %s - the model is %s."
+                  % (abs(gap), lo["long_term"], model_name,
+                     model_res["long_term_grade"], direction))
             print("  This is a finding to resolve, not a number to average. The scorecard is")
             print("  a zero-biased screening band that under-rates the AA+/AAA range; the")
             print("  model sees business factors a ratio grid cannot. Read both and decide.")
         prefix = AGENCY_PREFIX.get(meta.get("agency", ""), "")
         print("  house form: %s%s (%s) / %s"
-              % (prefix, ap_["long_term_grade"], ap_["outlook"], ap_["short_term_grade"]))
+              % (prefix, model_res["long_term_grade"], model_res["outlook"],
+                 model_res["short_term_grade"]))
 
     print("-" * 92)
     print("Neither engine is the rating. Both are inputs to a committee decision.")

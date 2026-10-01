@@ -2220,7 +2220,14 @@ def settings():
         '<p class="mut">The local scorecard engine is free and offline. Add '
         '<code>--engine api</code> for a model view as well, or <code>--engine both</code> to '
         'compare the two; those use the key above and are capped by '
-        '<code>--max-budget-usd</code> (default 2.00).</p></div>')
+        '<code>--max-budget-usd</code> (default 2.00).</p>'
+        '<p class="mut">For a model view with <b>no key and no internet</b>, use a local model '
+        'via <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a> &mdash; it '
+        'runs alongside the scorecard, the offline equivalent of <code>--engine both</code>:</p>'
+        '<pre class="cmd">ollama pull qwen2.5:14b   # one-time\n'
+        'python tools/rate_engine.py &lt;case-slug&gt; --engine ollama --ollama-model qwen2.5:14b</pre>'
+        '<p class="mut">See which models are pulled with '
+        '<code>python tools/rate_engine.py --list-models</code>.</p></div>')
     return page("Settings", body, active="settings")
 
 
