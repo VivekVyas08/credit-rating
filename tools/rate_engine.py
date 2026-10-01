@@ -462,7 +462,21 @@ def engine_api(slug, mod, R, meta, n_tieouts, model, effort, api_key):
 # Anthropic API. No key, no internet. Uses stdlib urllib so it adds no dependency. Needs the
 # Ollama server running and the model pulled (`ollama pull <model>`).
 OLLAMA_DEFAULT_URL = os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
-OLLAMA_DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.1")
+def _ollama_default_model():
+    """$OLLAMA_MODEL, else the web Settings 'ollama_model' choice, else a safe fallback."""
+    m = os.environ.get("OLLAMA_MODEL")
+    if m:
+        return m
+    try:
+        p = json.loads((ROOT / "webapp" / "ui_prefs.json").read_text(encoding="utf-8"))
+        if p.get("ollama_model"):
+            return str(p["ollama_model"])
+    except Exception:                                                     # noqa: BLE001
+        pass
+    return "llama3.1"
+
+
+OLLAMA_DEFAULT_MODEL = _ollama_default_model()
 
 
 def ollama_models(url=OLLAMA_DEFAULT_URL, timeout=4):

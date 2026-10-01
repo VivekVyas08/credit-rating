@@ -44,31 +44,21 @@ def main():
     except Exception:                                                     # noqa: BLE001
         pass
     print("=" * 78)
-    print("offline_agent.py - tool-loop smoke test (stubbed model, no network)")
+    print("offline_agent.py - single-shot drafter smoke test (stubbed model, no network)")
     print("=" * 78)
 
     slug = _pick_reconciling_case()
     print("\n[case] %s" % slug)
 
-    # Scripted model: read the skeleton, save a draft, then stop with a final line.
-    script = [
-        {"message": {"content": "", "tool_calls": [
-            {"function": {"name": "read_file",
-                          "arguments": {"path": ".claude/skills/icra-report-skeleton/SKELETON.md"}}}]}},
-        {"message": {"content": "", "tool_calls": [
-            {"function": {"name": "save_draft",
-                          "arguments": {"markdown": "# Test Co: rating assigned\n\n## Rationale\n"
-                                                    "Body.\n\n## Liquidity position: Adequate\n"}}}]}},
-        {"message": {"content": "Draft complete."}},
-    ]
-    seen = {"i": 0, "tools_offered": False}
+    # Single-shot model: one generation returning the full markdown, with tools OFF.
+    MD = ("# Test Co: rating assigned\n\n## Rationale\nBody.\n\n"
+          "## Liquidity position: Adequate\n")
+    seen = {"n": 0, "tools_on_last": None}
 
-    def fake_chat(url, model, messages, timeout):
-        # prove the real tool schema is being sent and think is disabled
-        # (messages/urls are real; we only replace the transport)
-        r = script[min(seen["i"], len(script) - 1)]
-        seen["i"] += 1
-        return r
+    def fake_chat(url, model, messages, timeout, tools_on=True):
+        seen["n"] += 1
+        seen["tools_on_last"] = tools_on
+        return {"message": {"content": MD}, "eval_count": 123}
 
     real = OA._ollama_chat
     OA._ollama_chat = fake_chat
@@ -76,10 +66,11 @@ def main():
     try:
         if draft_path.exists():
             draft_path.unlink()
-        out = OA.run(slug, "stub-model", "http://localhost:11434", timeout=30, max_steps=12)
+        out = OA.run(slug, "stub-model", "http://localhost:11434", timeout=30)
 
-        print("\n[1] loop + tools")
-        check(seen["i"] >= 3, "model was polled across tool steps (%d calls)" % seen["i"])
+        print("\n[1] single-shot drafting")
+        check(seen["n"] == 1, "exactly one generation call (%d)" % seen["n"])
+        check(seen["tools_on_last"] is False, "tools are NOT offered to the model (single-shot)")
         check(draft_path.is_file(), "draft file written to the case folder")
         if draft_path.is_file():
             body = draft_path.read_text(encoding="utf-8", errors="replace")
@@ -91,18 +82,26 @@ def main():
         check("Section audit" in out, "run() ran the offline section gate on the draft")
         check("NOT a rating" in out, "output states plainly it is not a rating")
 
-        print("\n[2] read_file sandbox (no traversal)")
+        print("\n[2] empty generation -> no draft, no crash")
+        OA._ollama_chat = lambda *a, **k: {"message": {"content": "   "}}
+        if draft_path.exists():
+            draft_path.unlink()
+        out2 = OA.run(slug, "stub-model", "http://localhost:11434", timeout=30)
+        check("NO DRAFT PRODUCED" in out2, "empty model reply -> clean NO DRAFT message")
+        OA._ollama_chat = fake_chat
+
+        print("\n[3] read_file sandbox (no traversal)")
         t = OA.Tools(slug, "stub-model")
         check(t.read_file("CLAUDE.md").startswith("# MASTER PROMPT"), "reads a project file")
         check("ERROR" in t.read_file("../../../Windows/System32/drivers/etc/hosts"),
               "blocks a path-traversal read outside the project")
         check("ERROR" in t.read_file("nope/does-not-exist.md"), "missing file -> error, not crash")
 
-        print("\n[3] aborts on a non-reconciling engine (nothing to draft from)")
+        print("\n[4] aborts on a non-reconciling engine (nothing to draft from)")
         orig = RE.run_tieouts
         RE.run_tieouts = lambda mod: (orig(mod)[0], orig(mod)[1], ["SYNTHETIC break"], [])
         try:
-            ab = OA.run(slug, "stub-model", "http://localhost:11434", timeout=30, max_steps=3)
+            ab = OA.run(slug, "stub-model", "http://localhost:11434", timeout=30)
             check(ab.startswith("ABORTED"), "a failing tie-out blocks drafting")
         finally:
             RE.run_tieouts = orig

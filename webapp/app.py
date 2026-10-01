@@ -2145,6 +2145,32 @@ def settings():
         + _e(m) + ' &mdash; ' + _e(d) + '</option>'
         for m, d in models.items())
 
+    # Offline (Ollama) models actually pulled on this machine, for the offline-model selector.
+    try:
+        ollama_pulled = RE.ollama_models()
+    except Exception:                                                     # noqa: BLE001
+        ollama_pulled = []
+    ollama_chosen = _read_pref().get("ollama_model") or RE.OLLAMA_DEFAULT_MODEL
+    if ollama_pulled:
+        ol_opts = "".join(
+            '<option value="' + _e(m) + '"' + (" selected" if m == ollama_chosen else "") + '>'
+            + _e(m) + '</option>' for m in ollama_pulled)
+        ollama_card = (
+            '<form method="post" action="' + url_for('settings_ollama_model') + '" class="rowform">'
+            '<select name="ollama_model" aria-label="Offline model">' + ol_opts + '</select>'
+            '<button class="btn" type="submit">Save offline model</button></form>'
+            '<p class="mut" style="margin-top:8px">Fully offline &mdash; no key, no internet. Used '
+            'by <code>python tools/rate_engine.py &lt;slug&gt; --engine ollama</code> (a model '
+            'view alongside the scorecard) and <code>python tools/offline_agent.py &lt;slug&gt;'
+            '</code> (an experimental offline draft). A bigger model gives a sharper view; on a '
+            'CPU-only machine, writing a full report can be slow.</p>')
+    else:
+        ollama_card = (
+            '<p class="mut">No local models are pulled, or the Ollama server is not running. '
+            'Install <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>, then '
+            'pull one &mdash; e.g. <code>ollama pull granite4.2:8b</code> &mdash; and it will '
+            'appear here to select.</p>')
+
     if key and key == sentinel:
         state = ('<span class="pill warn">Agent route</span> The stored value is the '
                  '<code>' + _e(sentinel) + '</code> sentinel, not an API key. Runs are handed '
@@ -2210,6 +2236,9 @@ def settings():
         '<p class="mut" style="margin-top:8px">Used by the API engine. The local scorecard engine '
         'runs offline and ignores this.</p></div>'
 
+        '<h2>Offline model (Ollama)</h2>'
+        '<div class="card">' + ollama_card + '</div>'
+
         '<h2>Running a rating</h2>'
         '<div class="card">'
         '<p class="mut">This page sets credentials only &mdash; it does not start a rating. An '
@@ -2272,6 +2301,25 @@ def settings_model():
         return redirect(url_for("settings"))
     _write_pref(model=m)
     flash("Model set to %s." % m)
+    return redirect(url_for("settings"))
+
+
+@app.post("/settings/ollama-model")
+def settings_ollama_model():
+    # The offline model for --engine ollama and offline_agent.py. Validated against what is
+    # actually pulled when the server is reachable; stored regardless so a just-pulled model
+    # set before the server starts still sticks (the engines 404-handle an absent model anyway).
+    RE = _rate_engine()
+    m = (request.form.get("ollama_model") or "").strip()
+    if not m:
+        flash("No offline model selected - nothing changed.")
+        return redirect(url_for("settings"))
+    pulled = RE.ollama_models()
+    if pulled and m not in pulled:
+        flash("'%s' is not among the pulled Ollama models - nothing changed." % m)
+        return redirect(url_for("settings"))
+    _write_pref(ollama_model=m)
+    flash("Offline model set to %s." % m)
     return redirect(url_for("settings"))
 
 

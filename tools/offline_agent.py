@@ -37,12 +37,10 @@ SYSTEM = """You draft a credit-rating rationale OFFLINE from already-verified da
 
 Hard rules:
 - Use ONLY the numbers in the VERIFIED DATA block. NEVER invent, adjust or estimate a figure.
-- Follow the report SKELETON exactly: read it with read_file, then produce every mandatory
-  section in its order and house style.
+- Produce EVERY mandatory section of the SKELETON, in its order and house style.
 - Rate on the stated agency's scale; the long-term grade is given to you - do not change it.
-- When the draft is complete, call save_draft ONCE with the full markdown, then call
-  run_section_audit and, if it reports a missing section, add it and save again.
-- Do your own reasoning silently; output only tool calls and, at the end, a one-line note."""
+- Output ONLY the report in markdown. No tool calls, no preamble, no commentary, no reasoning
+  trace - just the finished rationale, starting at its title."""
 
 
 def _tools():
@@ -92,10 +90,12 @@ class Tools:
         return out[-2500:] if out.strip() else "check_sections.py produced no output."
 
 
-def _ollama_chat(url, model, messages, timeout):
-    body = json.dumps({"model": model, "stream": False, "think": False,
-                       "tools": _tools(), "options": {"temperature": 0, "num_ctx": 16384},
-                       "messages": messages}).encode("utf-8")
+def _ollama_chat(url, model, messages, timeout, tools_on=True):
+    payload = {"model": model, "stream": False, "think": False,
+               "options": {"temperature": 0, "num_ctx": 16384}, "messages": messages}
+    if tools_on:
+        payload["tools"] = _tools()
+    body = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url + "/api/chat", data=body,
                                  headers={"Content-Type": "application/json"})
     try:
@@ -112,7 +112,7 @@ def _ollama_chat(url, model, messages, timeout):
         raise
 
 
-def run(slug, model, url, timeout, max_steps):
+def run(slug, model, url, timeout):
     # Verified inputs: numbers come from the ratio engine, never from the model.
     d, mod, meta = RE.load_case(slug)
     R, n, failures, _ack = RE.run_tieouts(mod)
@@ -123,56 +123,37 @@ def run(slug, model, url, timeout, max_steps):
     data_block = RE.build_prompt(slug, mod, R, meta, n)
     anchor_line = ("SCORECARD ANCHOR (deterministic, offline): %s"
                    % anchor.get("long_term", "n/a")) if anchor.get("available") else ""
+    skeleton_text = SKELETON.read_text(encoding="utf-8", errors="replace")[:9000]
 
-    first = ("ISSUER: %s   AGENCY: %s   SECTOR: %s\n\nThe report SKELETON is at "
-             "`%s` - read it first.\n\nVERIFIED DATA (use ONLY these numbers):\n%s\n%s\n\n"
-             "Draft the full rationale now."
-             % (meta.get("name", slug), meta.get("agency", "?"), meta.get("sector", "?"),
-                SKELETON.relative_to(ROOT).as_posix(), anchor_line, data_block))
+    # ONE pre-loaded generation, NO tools. A local model cannot orchestrate a tool loop for this
+    # (granite4.2:3b emitted tool-call SYNTAX as text and never wrote a word); handing it the
+    # skeleton + the verified numbers up front and asking for the report in a single pass is the
+    # only thing that reliably yields prose. Python does the saving and the audit.
+    user = ("Draft the rating rationale for the issuer below. Output ONLY the report in markdown.\n\n"
+            "ISSUER: %s   AGENCY: %s   SECTOR: %s\n\n"
+            "VERIFIED DATA (use ONLY these numbers, never invent one):\n%s\n%s\n\n"
+            "Follow this mandatory SKELETON section by section:\n\n%s"
+            % (meta.get("name", slug), meta.get("agency", "?"), meta.get("sector", "?"),
+               anchor_line, data_block, skeleton_text))
+    messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user}]
+
+    print("  generating the full rationale in one pass (no tools)...")
+    try:
+        resp = _ollama_chat(url, model, messages, timeout, tools_on=False)
+    except Exception as e:                                                # noqa: BLE001
+        return "ollama call failed: %s" % e
+    md = (resp.get("message") or {}).get("content", "")
+    if not md.strip():
+        return "NO DRAFT PRODUCED - the model returned no text."
 
     tools = Tools(slug, model)
-    messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": first}]
-    dispatch = {"read_file": tools.read_file, "save_draft": tools.save_draft,
-                "run_section_audit": tools.run_section_audit}
-
-    last_text = ""
-    for step in range(max_steps):
-        resp = _ollama_chat(url, model, messages, timeout)
-        msg = resp.get("message") or {}
-        calls = msg.get("tool_calls") or []
-        messages.append({"role": "assistant", "content": msg.get("content", ""),
-                         **({"tool_calls": calls} if calls else {})})
-        if msg.get("content"):
-            last_text = msg["content"]
-        if not calls:
-            break
-        for c in calls:
-            fn = (c.get("function") or {})
-            name = fn.get("name", "")
-            args = fn.get("arguments", {})
-            if isinstance(args, str):
-                try:
-                    args = json.loads(args)
-                except Exception:                                         # noqa: BLE001
-                    args = {}
-            print("  step %d: %s(%s)" % (step + 1, name,
-                  ", ".join("%s=%d chars" % (k, len(str(v))) for k, v in args.items()) or ""))
-            result = dispatch[name](**args) if name in dispatch else "ERROR: unknown tool %r" % name
-            messages.append({"role": "tool", "content": str(result)})
-
-    # A small model often forgets to call save_draft; fall back to its last text so there is
-    # always SOMETHING to look at, clearly marked.
-    if tools.draft_path is None and last_text.strip():
-        tools.save_draft(last_text)
-
-    if tools.draft_path is None:
-        return "NO DRAFT PRODUCED - the model never saved one and returned no usable text."
+    tools.save_draft(md)
     audit = tools.run_section_audit()
-    ready = "[FAIL]" not in audit and "FAIL" not in audit.split("\n")[-3:][0] if audit else False
-    return ("OFFLINE DRAFT written (experimental, screening only):\n  %s\n\n"
+    return ("OFFLINE DRAFT written (experimental, screening only):\n  %s\n  (%d chars of prose, "
+            "%s eval tokens)\n\n"
             "Section audit (expect gaps from a small local model):\n%s\n\n"
             "This is NOT a rating. Finish it with Claude (online) or by hand."
-            % (tools.draft_path, audit[:1500]))
+            % (tools.draft_path, len(md), resp.get("eval_count", "?"), audit[:1500]))
 
 
 def main(argv=None):
@@ -181,8 +162,7 @@ def main(argv=None):
     ap.add_argument("slug", help="case folder name under Companies/")
     ap.add_argument("--model", default=RE.OLLAMA_DEFAULT_MODEL)
     ap.add_argument("--url", default=RE.OLLAMA_DEFAULT_URL)
-    ap.add_argument("--timeout", type=int, default=1200, help="seconds per model call (default 1200)")
-    ap.add_argument("--max-steps", type=int, default=12)
+    ap.add_argument("--timeout", type=int, default=1800, help="seconds for the generation (default 1800)")
     a = ap.parse_args(argv)
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -193,7 +173,7 @@ def main(argv=None):
     print("This is a SCREENING DRAFT from a local model, not a rating. Numbers are engine-verified;")
     print("the prose is the local model's and is unverified.")
     print("-" * 92)
-    out = run(a.slug, a.model, a.url, a.timeout, a.max_steps)
+    out = run(a.slug, a.model, a.url, a.timeout)
     print("-" * 92)
     print(out)
 
