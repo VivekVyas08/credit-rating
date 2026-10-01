@@ -62,7 +62,9 @@ def main():
 
     real = OA._ollama_chat
     OA._ollama_chat = fake_chat
-    draft_path = ROOT / "Companies" / slug / ("%s_OFFLINE_DRAFT_Rating Rationale.md" % slug)
+    draft_path = ROOT / "Companies" / slug / ("%s_OFFLINE_DRAFT.md" % slug)
+    # Guard the regression this rename fixes: the draft must NOT match the real-rationale glob.
+    assert "Rating Rationale" not in draft_path.name, "offline draft must not look like a rationale"
     try:
         if draft_path.exists():
             draft_path.unlink()

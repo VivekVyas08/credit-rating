@@ -74,7 +74,10 @@ class Tools:
         return p.read_text(encoding="utf-8", errors="replace")[:12000]
 
     def save_draft(self, markdown=""):
-        name = "%s_OFFLINE_DRAFT_Rating Rationale.md" % self.slug
+        # Deliberately NOT "...Rating Rationale.md": that pattern is what delivery_audit.py,
+        # check_sections.py and the web app's find_outputs use to locate REAL delivered
+        # rationales. A screening draft must never be picked up as one.
+        name = "%s_OFFLINE_DRAFT.md" % self.slug
         self.draft_path = self.case_dir / name
         self.case_dir.mkdir(parents=True, exist_ok=True)
         self.draft_path.write_text((BANNER % self.model) + (markdown or ""), encoding="utf-8")

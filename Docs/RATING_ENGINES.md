@@ -166,7 +166,8 @@ only those and never to invent one - and the model writes the prose around them.
 
 **It is a SCREENING DRAFT, not a deliverable.** A local model is far below Claude: it will miss
 mandatory sections, mis-map the short-term grade and trip `check_sections.py`. The output is saved
-as `Companies/<slug>/<slug>_OFFLINE_DRAFT_Rating Rationale.md` with a loud EXPERIMENTAL banner and
+as `Companies/<slug>/<slug>_OFFLINE_DRAFT.md` (deliberately NOT named "...Rating Rationale.md",
+so the gates never mistake it for a delivered rationale) with a loud EXPERIMENTAL banner and
 then audited, so the gaps are visible. Finish it with Claude (online) or by hand - it is a
 starting point, never a rating. The run aborts if the ratio engine does not reconcile (there is
 nothing trustworthy to draft from). Needs a tools-capable local model (granite4.2, qwen3, ...).
@@ -178,11 +179,11 @@ RATING OUTCOME - Jindal Stainless Limited
 agency        : CareEdge
 tie-outs      : 39/39 reconcile
 credential    : environment variable ANTHROPIC_API_KEY (resolved by the SDK)
-model         : claude-opus-5 (effort high)
+model         : claude-opus-5-5 (effort high)
 
 LOCAL  (deterministic scorecard, offline)
        grade      : AA
-API    (claude-opus-5, effort high)
+API    (claude-opus-5-5, effort high)
        grade      : AA (Stable)
        short term : A1+
        confidence : high
