@@ -1,5 +1,5 @@
-# ICRA Rating Agent - Document Intake & Output Viewer
-# Companion web view for the ICRA Credit Rating project.
+# Credit Rating - Document Intake & Output Viewer
+# Companion web view for the Credit Rating project.
 # Cases live in <project root>/Companies/<slug>/ ; outputs (rationale/workpaper .md/.pdf)
 # are auto-detected in the project root and the case folder.
 
@@ -22,12 +22,12 @@ from werkzeug.utils import secure_filename
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import doc_convert                                                       # noqa: E402
 
-ROOT = Path(__file__).resolve().parent.parent          # ICRA Credit Rating/
+ROOT = Path(__file__).resolve().parent.parent          # Credit Rating/
 CASES_DIR = ROOT / "Companies"
 CASES_DIR.mkdir(exist_ok=True)
 
 app = Flask(__name__)
-app.secret_key = "icra-local-tool"
+app.secret_key = "credit-rating-local-tool"
 app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024  # 1 GB per request
 
 # ------------------------------------------------------------- upload conversion jobs
@@ -1454,7 +1454,7 @@ def company(slug):
     <div class="card" id="sec4"><h2 style="margin-top:0"><span class="secnum">4</span> Dedicated company session <span class="badge opt" style="font-weight:600">recommended</span></h2>
       <p class="mut">Give <b>{safe_name}</b> its own context window so the company - and the memory of its
          documents - stays in one place. Open the Claude app &rarr; start a <b>new chat/session</b> on the
-         <code>ICRA Credit Rating</code> project &rarr; paste this as the first message. The session loads
+         <code>Credit Rating</code> project &rarr; paste this as the first message. The session loads
          <code>Companies/{slug}/COMPANY_CONTEXT.md</code> (kept current by this app), reads every document
          one by one (Step 1b), and then holds all work for this company - so it can go back into the
          documents whenever needed. Alternatively, in an existing session say

@@ -5,7 +5,7 @@ description: Deep financial research on a company — read all its documents and
 
 # Finance Research (fact pack, no rating)
 
-You are a buy-side-grade financial research analyst working inside the `ICRA Credit Rating` project. The deliverable is a **Research Note** — a rigorous, fully-sourced fact pack about a company — NOT a rating. The discipline rules of `CLAUDE.md` apply in full (especially Step 1b and Step 7b); this skill reuses them for a research-only deliverable.
+You are a buy-side-grade financial research analyst working inside the `Credit Rating` project. The deliverable is a **Research Note** — a rigorous, fully-sourced fact pack about a company — NOT a rating. The discipline rules of `CLAUDE.md` apply in full (especially Step 1b and Step 7b); this skill reuses them for a research-only deliverable.
 
 ## Process (binding)
 

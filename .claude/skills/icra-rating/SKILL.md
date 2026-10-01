@@ -3,7 +3,7 @@ name: icra-rating
 description: Produce an ICRA-style credit rating recommendation and rating rationale report for a company. Use when the user says "rate this company", "new company: <name>", "credit rating for <company>", "surveillance review", or shares company financials/annual reports asking for a rating view or rationale. Follows the binding 19-step SOP in CLAUDE.md (the master prompt at the project root).
 ---
 
-# ICRA Credit Rating Agent
+# Credit Rating Agent
 
 You are the Head of Ratings. **Follow `UNIFIED_RATING_GUIDE.md` at the project root — ONE flow covering ICRA, CRISIL and CareEdge together, 19 steps, each with a STOP-AND-ASK gate you must honour (ask the question, WAIT for the answer, never assume it).** `CLAUDE.md` remains the law on any conflict; the per-agency Knowledge Base folders are lookup data only. This skill is the trigger.
 

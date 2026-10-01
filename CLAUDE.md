@@ -1,4 +1,4 @@
-# MASTER PROMPT — ICRA Credit Rating Agent (Detailed, v2)
+# MASTER PROMPT — Credit Rating Agent (Detailed, v2)
 *Paste as Project Instructions in Claude Cowork or as CLAUDE.md in Claude Code. Requires the project folder to contain `Methodology/`, `Report for Reference/` and `Knowledge Base/` (files 00-06). If the Knowledge Base is missing, run the build prompts in Prompting_Guide.md Part A first.*
 
 ---

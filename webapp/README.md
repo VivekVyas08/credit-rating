@@ -1,11 +1,11 @@
-# ICRA Rating Agent — Web App
+# Credit Rating — Web App
 
-Document intake, ISIN checklist and output viewer for the ICRA Credit Rating project.
+Document intake, ISIN checklist and output viewer for the Credit Rating project.
 
 ## Start
 
-Double-click **`Start-ICRA-Rating-App.bat`** in the project root
-(`ICRA Credit Rating\`), then open http://localhost:5050 — the browser
+Double-click **`Start Credit Rating Tool.bat`** in the project root
+(`Credit Rating\`), then open http://localhost:5050 — the browser
 opens automatically. Keep the black console window open while using the
 app; press Ctrl+C in it (or close it) to stop.
 
