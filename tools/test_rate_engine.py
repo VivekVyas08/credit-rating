@@ -414,6 +414,7 @@ def test_ollama_request_shape():
     check(body["stream"] is False, "non-streaming (one JSON response)")
     check(body["format"] == RE.SCHEMA, "SCHEMA passed as the structured-output format")
     check(body["options"]["temperature"] == 0, "temperature 0 for reproducibility")
+    check(body.get("think") is False, "thinking disabled (we want the JSON object, not a trace)")
     check([m["role"] for m in body["messages"]] == ["system", "user"], "system + user messages")
     prompt = body["messages"][1]["content"]
     check("VERIFIED RATIO SUITE" in prompt, "verified ratio suite is sent")

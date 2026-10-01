@@ -480,28 +480,43 @@ def engine_ollama(slug, mod, R, meta, n_tieouts, model, url=OLLAMA_DEFAULT_URL, 
     import urllib.request
 
     prompt = build_prompt(slug, mod, R, meta, n_tieouts)
-    body = json.dumps({
+    payload = {
         "model": model,
         "stream": False,
         "format": SCHEMA,                 # Ollama structured output - constrains to the schema
-        "options": {"temperature": 0,     # as reproducible as a local model gets
-                    "num_ctx": 8192},      # the ratio table + conventions overflow the 2k default
-        "messages": [{"role": "system", "content": SYSTEM},
-                     {"role": "user", "content": prompt}],
-    }).encode("utf-8")
-    req = urllib.request.Request(url + "/api/chat", data=body,
-                                 headers={"Content-Type": "application/json"})
-    try:
+        "think": False,                   # skip the chain-of-thought trace: we want the JSON
+        "options": {"temperature": 0,     # object, not a reasoning essay. On a THINKING model
+                    "num_ctx": 8192},      # (granite, qwen3, ...) generating the unused trace on
+        "messages": [{"role": "system", "content": SYSTEM},   # CPU is the whole bottleneck - it
+                     {"role": "user", "content": prompt}],     # was the 2.5-min-vs-10-min-timeout
+    }                                                          # difference on granite4.2:3b.
+
+    def _post(p):
+        req = urllib.request.Request(url + "/api/chat", data=json.dumps(p).encode("utf-8"),
+                                     headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=timeout) as resp:
-            out = json.load(resp)
+            return json.load(resp)
+
+    try:
+        out = _post(payload)
     except urllib.error.HTTPError as e:
-        if e.code == 404:
+        detail = e.read().decode("utf-8", "replace")
+        if e.code == 400 and "think" in detail.lower():
+            # A model with no thinking capability rejects `think`; retry once without it.
+            payload.pop("think", None)
+            try:
+                out = _post(payload)
+            except Exception as e2:                                       # noqa: BLE001
+                return {"engine": "ollama", "available": False,
+                        "reason": "ollama call failed (no-think retry): %s" % e2}
+        elif e.code == 404:
             pulled = ", ".join(ollama_models(url)) or "none"
             return {"engine": "ollama", "available": False,
                     "reason": "model %r is not pulled. Run:  ollama pull %s   (pulled: %s)"
                               % (model, model, pulled)}
-        return {"engine": "ollama", "available": False,
-                "reason": "ollama HTTP %s: %s" % (e.code, e.read().decode("utf-8", "replace")[:300])}
+        else:
+            return {"engine": "ollama", "available": False,
+                    "reason": "ollama HTTP %s: %s" % (e.code, detail[:300])}
     except urllib.error.URLError as e:
         return {"engine": "ollama", "available": False,
                 "reason": "cannot reach the Ollama server at %s (%s). Is `ollama serve` running?"
@@ -907,6 +922,8 @@ def main():
                          % OLLAMA_DEFAULT_MODEL)
     ap.add_argument("--ollama-url", default=OLLAMA_DEFAULT_URL,
                     help="Ollama server URL (default %r or $OLLAMA_HOST)" % OLLAMA_DEFAULT_URL)
+    ap.add_argument("--ollama-timeout", type=int, default=600,
+                    help="seconds to allow the local model to respond (default 600)")
     ap.add_argument("--set-key", action="store_true",
                     help="enter an API key (hidden input) and store it for future runs")
     ap.add_argument("--show-key", action="store_true",
@@ -1089,7 +1106,8 @@ def main():
         print("ollama server : %s" % args.ollama_url)
         print("ollama model  : %s (offline, no key)" % args.ollama_model)
         results["ollama"] = engine_ollama(args.slug, mod, R, meta, n_tieouts,
-                                          args.ollama_model, args.ollama_url)
+                                          args.ollama_model, args.ollama_url,
+                                          timeout=args.ollama_timeout)
 
     print()
     for name in ("local", "api", "ollama"):
