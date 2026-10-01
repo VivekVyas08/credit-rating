@@ -479,6 +479,18 @@ def _ollama_default_model():
 OLLAMA_DEFAULT_MODEL = _ollama_default_model()
 
 
+def _default_engine():
+    """The web Settings 'run_mode' choice -> the default --engine: offline -> 'ollama', else 'both'."""
+    try:
+        rm = json.loads((ROOT / "webapp" / "ui_prefs.json")
+                        .read_text(encoding="utf-8")).get("run_mode")
+        if rm == "offline":
+            return "ollama"
+    except Exception:                                                     # noqa: BLE001
+        pass
+    return "both"
+
+
 def ollama_models(url=OLLAMA_DEFAULT_URL, timeout=4):
     """Names of models pulled into the local Ollama server, or [] if unreachable."""
     import urllib.request
@@ -913,9 +925,10 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("slug", nargs="?", help="case folder name under Companies/")
     ap.add_argument("--engine", choices=["local", "api", "ollama", "agent", "both"],
-                    default="both",
-                    help="'ollama' is a fully OFFLINE model view (local model, no key, no "
-                         "internet) and runs alongside the local scorecard; 'agent' hands the "
+                    default=_default_engine(),
+                    help="default follows the web Settings Online/Offline mode (online->both, "
+                         "offline->ollama); 'ollama' is a fully OFFLINE model view (local model, "
+                         "no key, no internet) alongside the local scorecard; 'agent' hands the "
                          "job to a local Claude Code agent, also selected automatically when the "
                          "key is the sentinel %r" % AGENT_SENTINEL)
     ap.add_argument("--pending", action="store_true",

@@ -2171,6 +2171,24 @@ def settings():
             'pull one &mdash; e.g. <code>ollama pull granite4.2:8b</code> &mdash; and it will '
             'appear here to select.</p>')
 
+    # Online/offline run mode: what a bare `rate_engine.py <slug>` (no --engine) does.
+    run_mode = _read_pref().get("run_mode") or "online"
+    mode_opts = "".join(
+        '<option value="%s"%s>%s</option>' % (v, " selected" if v == run_mode else "", lbl)
+        for v, lbl in (("online", "Online &mdash; Claude API (needs a key)"),
+                       ("offline", "Offline &mdash; local Ollama model (no key, no internet)")))
+    if run_mode == "offline":
+        primary_cmd = ("python tools/rate_engine.py &lt;case-slug&gt; --engine ollama "
+                       "--ollama-model " + _e(ollama_chosen))
+        mode_note = ("Offline: the scorecard + the local model <b>" + _e(ollama_chosen)
+                     + "</b> &mdash; no key, no internet.")
+    else:
+        primary_cmd = ("python tools/rate_engine.py &lt;case-slug&gt; --engine both --model "
+                       + _e(chosen))
+        mode_note = ("Online: the scorecard + the Claude API model <b>" + _e(chosen)
+                     + "</b> &mdash; uses the key above, capped by <code>--max-budget-usd</code> "
+                       "(default 2.00).")
+
     if key and key == sentinel:
         state = ('<span class="pill warn">Agent route</span> The stored value is the '
                  '<code>' + _e(sentinel) + '</code> sentinel, not an API key. Runs are handed '
@@ -2239,26 +2257,31 @@ def settings():
         '<h2>Offline model (Ollama)</h2>'
         '<div class="card">' + ollama_card + '</div>'
 
+        '<h2>Mode</h2>'
+        '<div class="card">'
+        '<form method="post" action="' + url_for('settings_run_mode') + '" class="rowform">'
+        '<select name="run_mode" aria-label="Run mode">' + mode_opts + '</select>'
+        '<button class="btn" type="submit">Save mode</button></form>'
+        '<p class="mut" style="margin-top:8px">Choose how a rating runs. <b>Online</b> uses the '
+        'Claude API model (needs the key above); <b>Offline</b> uses the local Ollama model (no '
+        'key, no internet). The deterministic scorecard runs in both. This sets the default for a '
+        'bare <code>python tools/rate_engine.py &lt;slug&gt;</code> and the command shown below.</p>'
+        '</div>'
+
         '<h2>Running a rating</h2>'
         '<div class="card">'
-        '<p class="mut">This page sets credentials only &mdash; it does not start a rating. An '
-        'API or agent run spends money, and that should be an explicit decision taken where you '
-        'can see the output, not a button on a settings page. Run one from a terminal in the '
-        'project root:</p>'
-        '<pre class="cmd">python tools/rate_engine.py &lt;case-slug&gt; --engine local</pre>'
-        '<p class="mut">The local scorecard engine is free and offline. Add '
-        '<code>--engine api</code> for a model view as well, or <code>--engine both</code> to '
-        'compare the two; those use the key above and are capped by '
-        '<code>--max-budget-usd</code> (default 2.00).</p>'
-        '<p class="mut">For a model view with <b>no key and no internet</b>, use a local model '
-        'via <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a> &mdash; it '
-        'runs alongside the scorecard, the offline equivalent of <code>--engine both</code>:</p>'
-        '<pre class="cmd">ollama pull granite4.2:8b   # one-time\n'
-        'python tools/rate_engine.py &lt;case-slug&gt; --engine ollama --ollama-model granite4.2:8b</pre>'
-        '<p class="mut">See which models are pulled with '
-        '<code>python tools/rate_engine.py --list-models</code>. For an experimental OFFLINE '
-        '<b>draft of the rationale</b> from a local model (screening only, never a rating): '
-        '<code>python tools/offline_agent.py &lt;case-slug&gt; --model granite4.2:8b</code>.</p></div>')
+        '<p class="mut">This page sets your choices; it does not start a rating (a run should be '
+        'an explicit decision taken where you can see the output). Current mode: <b>'
+        + _e(run_mode) + '</b> &mdash; run it from a terminal in the project root:</p>'
+        '<pre class="cmd">' + primary_cmd + '</pre>'
+        '<p class="mut">' + mode_note + '</p>'
+        '<p class="mut" style="margin-top:8px">Other options: <code>--engine local</code> '
+        '(scorecard only, always free/offline), or <code>--engine api</code> / '
+        '<code>--engine ollama</code> for just that model view. '
+        '<code>python tools/rate_engine.py --list-models</code> lists the API models and the '
+        'pulled offline models. For an experimental OFFLINE <b>draft of the rationale</b> from a '
+        'local model (screening only, never a rating): '
+        '<code>python tools/offline_agent.py &lt;case-slug&gt;</code>.</p></div>')
     return page("Settings", body, active="settings")
 
 
@@ -2320,6 +2343,17 @@ def settings_ollama_model():
         return redirect(url_for("settings"))
     _write_pref(ollama_model=m)
     flash("Offline model set to %s." % m)
+    return redirect(url_for("settings"))
+
+
+@app.post("/settings/run-mode")
+def settings_run_mode():
+    mode = (request.form.get("run_mode") or "").strip().lower()
+    if mode not in ("online", "offline"):
+        flash("Pick Online or Offline - nothing changed.")
+        return redirect(url_for("settings"))
+    _write_pref(run_mode=mode)
+    flash("Mode set to %s." % mode)
     return redirect(url_for("settings"))
 
 
