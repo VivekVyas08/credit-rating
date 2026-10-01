@@ -2224,10 +2224,12 @@ def settings():
         '<p class="mut">For a model view with <b>no key and no internet</b>, use a local model '
         'via <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a> &mdash; it '
         'runs alongside the scorecard, the offline equivalent of <code>--engine both</code>:</p>'
-        '<pre class="cmd">ollama pull qwen2.5:14b   # one-time\n'
-        'python tools/rate_engine.py &lt;case-slug&gt; --engine ollama --ollama-model qwen2.5:14b</pre>'
+        '<pre class="cmd">ollama pull granite4.2:8b   # one-time\n'
+        'python tools/rate_engine.py &lt;case-slug&gt; --engine ollama --ollama-model granite4.2:8b</pre>'
         '<p class="mut">See which models are pulled with '
-        '<code>python tools/rate_engine.py --list-models</code>.</p></div>')
+        '<code>python tools/rate_engine.py --list-models</code>. For an experimental OFFLINE '
+        '<b>draft of the rationale</b> from a local model (screening only, never a rating): '
+        '<code>python tools/offline_agent.py &lt;case-slug&gt; --model granite4.2:8b</code>.</p></div>')
     return page("Settings", body, active="settings")
 
 

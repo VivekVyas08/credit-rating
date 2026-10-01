@@ -148,6 +148,29 @@ python tools/rate_engine.py <slug> --engine ollama --ollama-model qwen2.5:14b
   scorecard is. Treat its view as judgement, like the API engine's - an input to the committee,
   never the rating itself.
 
+## Offline draft agent (experimental) - `tools/offline_agent.py`
+
+The `ollama` engine returns a rating *view* (a small object), not a written report. For an
+offline model that actually **drafts the rationale** - using the report skeleton, the house
+style and the verified numbers, with real tools - there is a separate, deliberately experimental
+tool:
+
+```bash
+python tools/offline_agent.py <case-slug> --model granite4.2:8b
+```
+
+It runs a small tool-using loop against the local model (`read_file` for the skeleton/conventions,
+`save_draft`, `run_section_audit`), **offline, no key**. The discipline is the same as the engines:
+the figures come from the ratio engine and are handed to the model verbatim - it is told to use
+only those and never to invent one - and the model writes the prose around them.
+
+**It is a SCREENING DRAFT, not a deliverable.** A local model is far below Claude: it will miss
+mandatory sections, mis-map the short-term grade and trip `check_sections.py`. The output is saved
+as `Companies/<slug>/<slug>_OFFLINE_DRAFT_Rating Rationale.md` with a loud EXPERIMENTAL banner and
+then audited, so the gaps are visible. Finish it with Claude (online) or by hand - it is a
+starting point, never a rating. The run aborts if the ratio engine does not reconcile (there is
+nothing trustworthy to draft from). Needs a tools-capable local model (granite4.2, qwen3, ...).
+
 ## Example
 
 ```
