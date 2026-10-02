@@ -481,6 +481,29 @@ def test_sdk_credential_detection():
         anthropic.Anthropic = real
 
 
+def test_offline_output_guards():
+    """The two guards on a local model's output: misquoted figures and a mis-mapped short-term grade.
+
+    Both regressions were real: granite4.2:8b wrote "54,341,906 crore" for a verified 543,419.06,
+    and granite4.2:3b returned "AA+" in the short-term field.
+    """
+    print("\n[14] offline output guards (figure provenance, short-term mapping)")
+    prompt = "Balance sheet size 543,419.06   CET-1 capital 63,766.66   Net profit 933.33"
+    bad = {"reasoning": "Balance sheet size is robust at 54,341,906 crore.",
+           "key_strengths": ["CET-1 capital of 63,767 crore", "net profit 933.33 crore"],
+           "key_weaknesses": ["an 89% decline"]}
+    check(RE._figure_warnings(bad, prompt) == [54341906.0],
+          "a figure misquoted 100x is flagged; a rounded one and a small % are not")
+    check(RE._figure_warnings({"reasoning": "Net profit 933.33 crore"}, prompt) == [],
+          "prose quoting only verified figures raises no warning")
+    d = RE._apply_st_guard({"long_term_grade": "AA+", "short_term_grade": "AA+"})
+    check(d["short_term_grade"] == "A1+" and "short_term_corrected" in d,
+          "a long-term symbol in the short-term field is replaced by the mapped grade")
+    d = RE._apply_st_guard({"long_term_grade": "A-", "short_term_grade": "A1"})
+    check(d["short_term_grade"] == "A1" and "short_term_corrected" not in d,
+          "a legitimate short-term grade is left alone")
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -493,7 +516,7 @@ def main():
                test_api_errors, test_divergence, test_key_handling, test_key_storage,
                test_ui_model_pref,
                test_ollama_success, test_ollama_request_shape, test_ollama_errors,
-               test_sdk_credential_detection):
+               test_sdk_credential_detection, test_offline_output_guards):
         fn()
     print("\n" + "=" * 78)
     if _failures:

@@ -481,6 +481,34 @@ def _canonical_st(lt):
     return "A4"      # BB and below
 
 
+def _figure_warnings(data, prompt):
+    """Large numbers the model WROTE that are not in the verified suite it was GIVEN.
+
+    The schema has no figure field, but its free-text strings carry figures, and nothing checked
+    them: granite4.2:8b wrote "Balance sheet size: 54,341,906 crore" for a verified 543,419.06 -
+    wrong by 100x, printed as if verified. This lists every number >= 100 in the model's prose
+    that matches nothing in the prompt (within rounding), so a misquote is visible, not silent.
+    Small numbers (percent changes, thresholds) are skipped: they are legitimately model-derived.
+    """
+    def nums(s):
+        out = set()
+        for m in re.finditer(r"(?<![\w.])\d[\d,]*(?:\.\d+)?", str(s)):
+            try:
+                out.add(float(m.group().replace(",", "")))
+            except ValueError:
+                pass
+        return out
+    known = nums(prompt)
+    prose = [data.get(k, "") for k in ("reasoning", "principal_monitorable",
+                                       "data_limitations_considered")]
+    prose += list(data.get("key_strengths", [])) + list(data.get("key_weaknesses", []))
+    bad = set()
+    for n in nums(" ".join(str(p) for p in prose)):
+        if n >= 100 and not any(abs(n - k) <= max(1.0, 0.001 * k) for k in known):
+            bad.add(n)
+    return sorted(bad)
+
+
 def _apply_st_guard(data):
     """Override the short-term grade when the model returns a non-short-term symbol (the mis-map
     granite4.2:3b produced). Shared by the ollama and embedded engines."""
@@ -709,9 +737,12 @@ def engine_embedded(slug, mod, R, meta, n_tieouts, n_ctx=12288,
         return {"engine": "embedded", "available": False,
                 "reason": "response missing required field(s): %s" % ", ".join(missing)}
     _apply_st_guard(data)
+    fw = _figure_warnings(data, prompt)
+    if fw:
+        data["figure_warnings"] = fw
     usage = out.get("usage", {}) or {}
     data.update({"engine": "embedded", "available": True,
-                 "model": "%s (in-process llama.cpp, no server)" % os.path.basename(gguf)[:16],
+                 "model": "%s (in-process llama.cpp, no server)" % Path(gguf).stem[:40],
                  "effort": "n/a (local)",
                  "usage": {"input_tokens": usage.get("prompt_tokens"),
                            "output_tokens": usage.get("completion_tokens")}})
@@ -1006,6 +1037,9 @@ def engine_ollama(slug, mod, R, meta, n_tieouts, model, url=OLLAMA_DEFAULT_URL, 
                 "reason": "response missing required field(s): %s" % ", ".join(missing)}
 
     _apply_st_guard(data)   # fix a LONG-TERM symbol wrongly returned in the short-term field
+    fw = _figure_warnings(data, prompt)
+    if fw:
+        data["figure_warnings"] = fw
 
     data.update({
         "engine": "ollama", "available": True, "model": model, "effort": "n/a (local)",
@@ -1635,6 +1669,12 @@ def main():
             print("       reasoning  : %s" % r["reasoning"])
             print("       tokens     : in %s / out %s"
                   % (r["usage"]["input_tokens"], r["usage"]["output_tokens"]))
+            if r.get("short_term_corrected"):
+                print("       ST GUARD   : %s" % r["short_term_corrected"])
+            if r.get("figure_warnings"):
+                print("       *** UNVERIFIED FIGURES in the model's prose (not in the verified "
+                      "suite - misquoted or model-derived): %s"
+                      % ", ".join("%g" % n for n in r["figure_warnings"]))
 
     lo = results.get("local", {})
     model_res = results.get("api") or results.get("ollama") or results.get("embedded") or {}
