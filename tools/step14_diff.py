@@ -272,6 +272,33 @@ def rated_total(text: str):
     return total
 
 
+def _headline(text: str):
+    """(long-term grade, outlook) from the rating-action area of a report.
+
+    The outlook word must sit next to the grade (/ ; or an open paren), which is exactly how a
+    long-term rating is written and is never how a short-term grade (A1+, no outlook) is - so this
+    picks the long-term grade without confusing it with the short-term one.
+    """
+    head = text[:4000]
+    m = re.search(r"\b(AAA|AA[+-]?|A[+-]?|BBB[+-]?|BB[+-]?|B[+-]?|C[+-]?|D)\s*[/;(]\s*"
+                  r"(stable|negative|positive|developing)", head, re.I)
+    if m:
+        return (m.group(1).upper(), m.group(2).capitalize())
+    return (None, None)
+
+
+def _pubdate(name: str):
+    import datetime
+    m = re.search(r"(\d{1,2})\s+([A-Za-z]{3})[A-Za-z]*\s+(\d{4})", name)
+    if not m:
+        return datetime.datetime.min
+    try:
+        return datetime.datetime.strptime("%s %s %s" % (m.group(1), m.group(2), m.group(3)),
+                                          "%d %b %Y")
+    except ValueError:
+        return datetime.datetime.min
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -317,6 +344,28 @@ def main():
 
     my_rows, my_rated = brief_rows(mine), rated_total(mine)
     unexplained = 0
+
+    # GRADE + OUTLOOK vs the issuer's LATEST action (added 02-Oct-2026 after the IndusInd miss:
+    # the report carried a Negative outlook anchored to a year-old action while the agency's
+    # current action was Stable - nothing compared the two). Compared against the most recent
+    # publication only, so an older superseded action does not raise a false divergence.
+    latest = max(pubs, key=lambda p: _pubdate(p.name))
+    mg, mo = _headline(mine)
+    tg, to = _headline(latest.read_text(encoding="utf-8", errors="replace"))
+    print("\n--- RATING vs the latest action (%s) ---" % latest.name)
+    if mg and tg:
+        gflag = "ok" if mg == tg else "*** GRADE DIFFERS ***"
+        print("  %-26s ours=%-12s theirs=%-12s %s" % ("Long-term grade", mg, tg, gflag))
+        if mg != tg:
+            unexplained += 1
+    if mo and to:
+        oflag = "ok" if mo == to else "*** OUTLOOK DIFFERS ***"
+        print("  %-26s ours=%-12s theirs=%-12s %s" % ("Outlook", mo, to, oflag))
+        if mo != to:
+            unexplained += 1
+    if not (mg and tg):
+        print("  (could not parse a comparable long-term grade/outlook from one of the reports)")
+
     for pub in pubs:
         txt = pub.read_text(encoding="utf-8", errors="replace")
         print("\n--- vs %s ---" % pub.name)

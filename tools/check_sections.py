@@ -943,11 +943,11 @@ def _hybrid_cap_conflated(t: str):
     agency = _agency_from_headline(t)
     about = _section_body(t, r"about the")
     is_nbfc = re.search(r"\bnbfc\b|housing finance|non-banking financial", about, re.I)
-    if agency == "ICRA" and not is_nbfc and re.search(r"\b15\s*%", hybrid_ctx):
+    if agency == "ICRA" and not is_nbfc and re.search(r"(?<![\d.])15\s*%", hybrid_ctx):
         return ("ICRA corporate hybrid-instrument cap cited as 15% - ICRA's own cap is 30% of "
                 "adjusted equity (ICRA_CONVENTIONS.md S9). 15% of Tier I capital is CRISIL's "
                 "NBFC/HFC regulatory-inclusion rule and does not apply to an ICRA corporate case.")
-    if agency == "CRISIL" and is_nbfc and re.search(r"\b30\s*%", hybrid_ctx):
+    if agency == "CRISIL" and is_nbfc and re.search(r"(?<![\d.])30\s*%", hybrid_ctx):
         return ("CRISIL NBFC/HFC hybrid-instrument cap cited as 30% - CRISIL's own cap is 15% "
                 "of Tier I capital (CRISIL_BANKS_NBFC_CONVENTIONS.md S2). 30% of adjusted equity "
                 "is ICRA's corporate analytical rule and does not apply to a CRISIL NBFC case.")
@@ -962,7 +962,7 @@ def _hybrid_cap_conflated(t: str):
     #     CRISIL corporate   20% of adjusted net worth   analytical
     #     CRISIL NBFC/HFC    15% of Tier I capital       regulatory
     if agency == "CRISIL" and not is_nbfc:
-        m = re.search(r"\b(30|15)\s*%", hybrid_ctx)
+        m = re.search(r"(?<![\d.])(30|15)\s*%", hybrid_ctx)
         if m:
             wrong = m.group(1)
             owner = ("ICRA's corporate rule (30% of adjusted equity)" if wrong == "30"

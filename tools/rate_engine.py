@@ -351,7 +351,304 @@ Rules that bind you:
   attached to it is not usable."""
 
 
-def build_prompt(slug, mod, R, meta, n_tieouts):
+# Two tiers of QUALITATIVE signal. The offline model is blind to everything that is not a number;
+# these pull the credit-relevant NARRATIVE out of the filings so it can judge what the ratios
+# cannot show. RISK phrases come FIRST and get the larger budget - a small model reading only the
+# management narrative turns CREDULOUS (it read IndusInd's CEO roadmap and went *more* positive),
+# so the control-lapse / auditor / resignation disclosures must out-rank the promotional prose.
+# Neither tier is a licence to extract figures - numbers stay on the engine's rails (see below).
+_DOC_RISK = [
+    r"emphasis of matter", r"qualified (?:conclusion|opinion)", r"discrepanc", r"irregularit",
+    r"internal financial control", r"\bfraud\b", r"whistle", r"resign", r"stepped down",
+    r"penalt|regulatory action|show cause|adverse", r"\bRBI\b.{0,60}(inspection|supervis|direction)",
+    r"going concern", r"key audit matter", r"material weakness|remediat", r"lapse",
+    r"non-compliance|contraven", r"restructur", r"stress|slippage(?!s? ratio)",
+]
+_DOC_CONTEXT = [
+    r"managing director|chief executive|\bMD & CEO\b|\bCEO\b", r"appointed as|succession",
+    r"road ?map|strategic priorit|three-year", r"\boutlook\b", r"corporate governance",
+    r"related party", r"contingent liabilit", r"deposit franchise|casa",
+]
+
+
+def _doc_context(slug, max_chars=6000, risk_budget=4000):
+    """Bounded QUALITATIVE excerpts from the case documents, RISK-weighted, newest-first.
+
+    This is the OPT-IN change (--with-docs): it lets the offline model read the narrative the
+    ratio table cannot carry. It is NOT a licence to extract figures. A credit model's dominant
+    failure class in this project is the EXTRACTION error (CLAUDE.md FM26/30/36/38), caught only
+    because numbers flow through the tied-out engine. So this returns PROSE lines about judgement
+    factors, skips anything that is mostly digits/pipes (a financial table row), takes RISK
+    disclosures before promotional narrative, and the prompt that embeds it forbids reading any
+    figure out of it. Numbers stay on the engine's rails.
+    """
+    import re as _re
+    base = os.path.join(ROOT, "Companies", slug, "documents")
+    if not os.path.isdir(base):
+        return ""
+    files = [os.path.join(base, f) for f in os.listdir(base) if f.lower().endswith(".md")]
+    def _year(p):
+        m = _re.search(r"20\d\d", os.path.basename(p))
+        return int(m.group()) if m else 0
+    files.sort(key=lambda p: (_year(p), os.path.getmtime(p)), reverse=True)
+
+    risk = [_re.compile(p, _re.I) for p in _DOC_RISK]
+    ctx = [_re.compile(p, _re.I) for p in _DOC_CONTEXT]
+
+    def _collect(pats, budget, seen):
+        got, total = [], 0
+        for fp in files:
+            try:
+                lines = open(fp, encoding="utf-8", errors="replace").read().splitlines()
+            except Exception:                                             # noqa: BLE001
+                continue
+            name, per_file = os.path.basename(fp), 0
+            for ln in lines:
+                s = ln.strip()
+                if len(s) < 40 or len(s) > 500:
+                    continue
+                digits = sum(c.isdigit() for c in s)
+                if s.count("|") >= 3 or digits > len(s) * 0.25:          # a table row, not prose
+                    continue
+                if not any(p.search(s) for p in pats):
+                    continue
+                key = s[:60].lower()
+                if key in seen:
+                    continue
+                seen.add(key)
+                entry = "  [%s] %s" % (name, s if len(s) <= 400 else s[:400] + "...")
+                if total + len(entry) > budget:
+                    break
+                got.append(entry); total += len(entry); per_file += 1
+                if per_file >= 12:
+                    break
+            if total >= budget:
+                break
+        return got, total
+
+    seen = set()
+    risk_lines, used = _collect(risk, risk_budget, seen)      # RISK first, larger budget
+    ctx_lines, _ = _collect(ctx, max_chars - used, seen)      # fill the rest with context
+    blocks = []
+    if risk_lines:
+        blocks.append("RISK / CONTROL / AUDITOR DISCLOSURES (weigh these first):\n"
+                      + "\n".join(risk_lines))
+    if ctx_lines:
+        blocks.append("MANAGEMENT / STRATEGY / GOVERNANCE NARRATIVE (management's own framing - "
+                      "corroborate, do not take at face value):\n" + "\n".join(ctx_lines))
+    return "\n\n".join(blocks)
+
+
+# The distilled RATING CRAFT - the house judgement rules the online agent carries from CLAUDE.md
+# and the icra-rating skill. Fixed text (not figures), so it is safe to hand any engine.
+_CRAFT_RULES = """RATING CRAFT - how a rating view is formed in this house (judgement rules, not figures):
+- Factors are CORE vs SUPPLEMENTARY. For a bank/NBFC the CORE factors are asset quality,
+  capitalisation, earnings and (for a bank) the resource/deposit profile; SUPPLEMENTARY factors
+  (market position, management, liquidity) can CONSTRAIN the rating but cannot LIFT it above what
+  the core supports.
+- A rating is a FORWARD-LOOKING opinion: weigh the TREND and trajectory, not only the latest
+  level. A one-year earnings trough with strong capital and a visible recovery is a different
+  credit from a structural decline - say which this is.
+- OUTLOOK: Negative when the profile is likely to weaken or a material uncertainty is unresolved;
+  Stable when it is expected to hold; Positive when it is likely to strengthen. Never attach an
+  outlook to a C/D grade or to a short-term rating.
+- GOVERNANCE, internal-control lapses, auditor qualifications / Emphasis of Matter and senior-
+  management transitions are credit-material regardless of size, and typically CAP the rating or
+  pressure the OUTLOOK until they are demonstrably resolved.
+- HYBRID / Basel III notching: Tier-II sits at or near the senior rating for a strong issuer;
+  Additional Tier-I (perpetual) is notched BELOW senior for coupon discretion and write-down risk.
+- ASSET QUALITY read correctly: a fall in GNPA driven by write-offs is not the same as recovery;
+  read delinquency net of write-offs. Microfinance/unsecured stress is cyclical - judge the cycle.
+- Every conclusion must cite a specific figure (from the verified suite) or a specific disclosed
+  fact (from the narrative)."""
+
+
+_VALID_ST = {"A1+", "A1", "A2+", "A2", "A3+", "A3", "A4+", "A4"}
+
+
+def _canonical_st(lt):
+    """Map a long-term notch to the strongest consistent short-term grade (the SYSTEM prompt's
+    own table). A guard, not a liquidity-aware mapping - it only fires when the model returned a
+    non-short-term symbol, so it replaces a clearly wrong value, never a legitimate A1/A1+ choice."""
+    lt = str(lt).strip().upper().replace("CRISIL", "").replace("[ICRA]", "").strip()
+    table = {
+        "AAA": "A1+", "AA+": "A1+", "AA": "A1+", "AA-": "A1+",
+        "A+": "A1+", "A": "A1+", "A-": "A2+",
+        "BBB+": "A2", "BBB": "A3+", "BBB-": "A3", "BB+": "A4+",
+    }
+    if lt in table:
+        return table[lt]
+    return "A4"      # BB and below
+
+
+def _apply_st_guard(data):
+    """Override the short-term grade when the model returns a non-short-term symbol (the mis-map
+    granite4.2:3b produced). Shared by the ollama and embedded engines."""
+    st = str(data.get("short_term_grade", "")).strip().upper().replace("CRISIL", "").replace("[ICRA]", "").strip()
+    if st not in _VALID_ST:
+        derived = _canonical_st(data.get("long_term_grade", ""))
+        data["short_term_grade"] = derived
+        data["short_term_corrected"] = ("model returned %r (not a short-term symbol); "
+                                        "derived %s from the long-term grade" % (st or "(blank)", derived))
+    return data
+
+
+def _resolve_gguf(model=None):
+    """Locate a GGUF weights file WITHOUT needing Ollama to be running.
+
+    Order: $CREDITRATING_GGUF (an explicit .gguf path) -> the weights Ollama already downloaded,
+    discovered by reading its manifest for `model` and following the model layer to its blob. This
+    lets the embedded engine reuse the ~5 GB granite4.2:8b file already on disk - no re-download,
+    no server.
+    """
+    p = os.environ.get("CREDITRATING_GGUF")
+    if p and os.path.isfile(p):
+        return p
+    # Project-local weights (Ollama-independent): <project>/models/*.gguf. Preferred over the
+    # Ollama store so the tool works even if Ollama is uninstalled.
+    local_dir = ROOT / "models"
+    if local_dir.is_dir():
+        ggufs = sorted(local_dir.glob("*.gguf"))
+        if ggufs:
+            return str(ggufs[0])
+    model = model or OLLAMA_DEFAULT_MODEL
+    name, _, tag = model.partition(":")
+    tag = tag or "latest"
+    store = Path(os.environ.get("OLLAMA_MODELS") or (Path.home() / ".ollama" / "models"))
+    man = store / "manifests" / "registry.ollama.ai" / "library" / name / tag
+    if not man.is_file():
+        return None
+    try:
+        m = json.loads(man.read_text(encoding="utf-8"))
+    except Exception:                                                     # noqa: BLE001
+        return None
+    for layer in m.get("layers", []):
+        if str(layer.get("mediaType", "")).endswith(".model"):
+            blob = store / "blobs" / str(layer.get("digest", "")).replace(":", "-")
+            if blob.is_file():
+                return str(blob)
+    return None
+
+
+def _embedded_schema():
+    """A copy of SCHEMA that forces non-empty prose: llama.cpp's grammar otherwise lets the model
+    return blank strings/arrays and stop (observed: 77 output tokens, empty reasoning)."""
+    import copy
+    s = copy.deepcopy(SCHEMA)
+    for k, v in s["properties"].items():
+        if v.get("type") == "array":
+            v["minItems"] = 2
+            v.setdefault("items", {})["minLength"] = 20
+        elif v.get("type") == "string" and k in ("principal_monitorable", "reasoning",
+                                                  "data_limitations_considered"):
+            v["minLength"] = 40
+    return s
+
+
+def engine_embedded(slug, mod, R, meta, n_tieouts, n_ctx=12288,
+                    with_docs=False, with_skills=False, model_hint=None):
+    """Fully in-process offline rating view: loads a GGUF with llama-cpp-python and runs inference
+    in THIS process - no Ollama server. Same SYSTEM prompt, SCHEMA, doc/skills context and
+    short-term guard as the ollama engine; only the runtime differs."""
+    try:
+        from llama_cpp import Llama
+    except Exception:                                                     # noqa: BLE001
+        return {"engine": "embedded", "available": False,
+                "reason": "llama-cpp-python is not installed. One-time setup (then NO Ollama "
+                          "server is needed):  pip install llama-cpp-python"}
+    gguf = _resolve_gguf(model_hint)
+    if not gguf:
+        return {"engine": "embedded", "available": False,
+                "reason": "no GGUF weights found. Set CREDITRATING_GGUF to a .gguf file, or keep "
+                          "the Ollama-downloaded model (auto-discovered from %s)."
+                          % (Path.home() / ".ollama" / "models")}
+    prompt = build_prompt(slug, mod, R, meta, n_tieouts, with_docs=with_docs, with_skills=with_skills)
+    try:
+        llm = Llama(model_path=gguf, n_ctx=n_ctx, n_threads=os.cpu_count() or 4, verbose=False)
+        kw = dict(messages=[{"role": "system", "content": SYSTEM},
+                            {"role": "user", "content": prompt}],
+                  temperature=0, max_tokens=1600)
+        # llama.cpp's schema->grammar permits empty strings/arrays, so the base SCHEMA let the
+        # model satisfy it with 77 tokens of blank prose. A constrained copy with minLength/
+        # minItems forces it to actually write the reasoning; fall back progressively if a given
+        # llama-cpp-python build's grammar converter rejects the extra keywords.
+        for rf in ({"type": "json_object", "schema": _embedded_schema()},
+                   {"type": "json_object", "schema": SCHEMA},
+                   {"type": "json_object"}):
+            try:
+                out = llm.create_chat_completion(response_format=rf, **kw)
+                break
+            except (TypeError, ValueError):
+                continue
+        else:
+            return {"engine": "embedded", "available": False,
+                    "reason": "this llama-cpp-python build rejected JSON-schema response_format"}
+    except Exception as e:                                                # noqa: BLE001
+        return {"engine": "embedded", "available": False,
+                "reason": "llama.cpp inference failed: %s" % e}
+    text = ((out.get("choices") or [{}])[0].get("message") or {}).get("content", "") or ""
+    if not text.strip():
+        return {"engine": "embedded", "available": False, "reason": "empty response from the model"}
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as e:
+        return {"engine": "embedded", "available": False, "reason": "response was not JSON: %s" % e}
+    missing = [k for k in SCHEMA["required"] if k not in data]
+    if missing:
+        return {"engine": "embedded", "available": False,
+                "reason": "response missing required field(s): %s" % ", ".join(missing)}
+    _apply_st_guard(data)
+    usage = out.get("usage", {}) or {}
+    data.update({"engine": "embedded", "available": True,
+                 "model": "%s (in-process llama.cpp, no server)" % os.path.basename(gguf)[:16],
+                 "effort": "n/a (local)",
+                 "usage": {"input_tokens": usage.get("prompt_tokens"),
+                           "output_tokens": usage.get("completion_tokens")}})
+    return data
+
+
+def _skills_context(meta, max_chars=2500):
+    """Bounded agency CRITERIA + report craft - 'the skills' the online agent uses.
+
+    This is the OPT-IN --with-skills change. It gives the offline model the methodology it was
+    blind to: how THIS agency assesses THIS sector (core/supplementary factors, ratio
+    conventions, notching), plus the distilled house craft rules. All of it is fixed criteria
+    text, never issuer figures, so it carries no extraction risk.
+    """
+    agency = (meta.get("agency") or "").upper()
+    sector = (meta.get("sector") or "").lower()
+    is_fin = any(k in sector for k in ("bank", "financial", "nbfc", "hfc", "finance"))
+    # candidate convention files, agency + sector aware, most specific first
+    cand = []
+    if agency == "CRISIL":
+        cand = (["CRISIL/CRISIL_BANKS_NBFC_CONVENTIONS.md"] if is_fin
+                else ["CRISIL/CRISIL_CONVENTIONS.md"]) + ["CRISIL/CRISIL_CONVENTIONS.md"]
+    elif agency == "ICRA":
+        cand = (["ICRA_BANKS_NBFC_CONVENTIONS.md"] if is_fin else ["ICRA_CONVENTIONS.md"]) \
+            + ["ICRA_CONVENTIONS.md"]
+    elif agency in ("CAREEDGE", "CARE", "CARE EDGE"):
+        cand = (["CareEdge/BROKING_CONVENTIONS.md"] if is_fin
+                else ["CareEdge/CORPORATE_CONVENTIONS.md"])
+    parts = [_CRAFT_RULES]
+    for rel in cand:
+        fp = os.path.join(ROOT, rel)
+        if not os.path.isfile(fp):
+            continue
+        try:
+            body = open(fp, encoding="utf-8", errors="replace").read()
+        except Exception:                                                 # noqa: BLE001
+            continue
+        # a table of contents (headers) + a bounded prefix of the body, so the model sees both
+        # the factor taxonomy and the detail without the whole file.
+        heads = [ln.strip() for ln in body.splitlines() if ln.lstrip().startswith("#")]
+        toc = "\n".join("  " + h for h in heads[:40])
+        parts.append("AGENCY CRITERIA - %s (%s)\nSection map:\n%s\n\nExtract:\n%s"
+                     % (rel, "financial-sector" if is_fin else "corporate", toc, body[:max_chars]))
+        break
+    return "\n\n".join(parts)
+
+
+def build_prompt(slug, mod, R, meta, n_tieouts, with_docs=False, with_skills=False):
     disclosed = getattr(mod, "DISCLOSED_DIFFERENCES", [])
     unverified = sorted(getattr(mod, "UNVERIFIED_INPUTS", set()))
     parts = [
@@ -375,6 +672,32 @@ def build_prompt(slug, mod, R, meta, n_tieouts):
     parts += ["", "INPUTS NO TIE-OUT COVERS - weaker evidence, factor into your confidence:"]
     parts.append("  " + ("; ".join(_flatten(u) for u in unverified)
                          if unverified else "(none - every input is checked)"))
+    if with_skills:
+        sk = _skills_context(meta)
+        if sk:
+            parts += [
+                "",
+                "RATING CRAFT AND AGENCY CRITERIA - apply these as the online analyst would. This "
+                "is fixed methodology and house craft (how this agency rates this sector; how to "
+                "weigh factors, notch hybrids and set the outlook). It tells you HOW to judge; it "
+                "is not issuer data and carries no figures of its own.",
+                "",
+                sk,
+            ]
+    if with_docs:
+        ctx = _doc_context(slug)
+        if ctx:
+            parts += [
+                "",
+                "QUALITATIVE DOCUMENT CONTEXT - narrative pulled from the issuer's own filings "
+                "(governance, management, events, auditor opinion, strategy). Use this ONLY for "
+                "JUDGEMENT - the governance/management/event risk the ratios cannot show, and the "
+                "outlook. BINDING: never read a financial FIGURE out of these lines; every number "
+                "you cite must come from the VERIFIED RATIO SUITE above. A figure in the narrative "
+                "is unverified and must not enter your reasoning as a number.",
+                "",
+                ctx,
+            ]
     parts += ["",
               "Form your rating view. Return only the structured object."]
     return "\n".join(parts)
@@ -473,19 +796,25 @@ def _ollama_default_model():
             return str(p["ollama_model"])
     except Exception:                                                     # noqa: BLE001
         pass
-    return "llama3.1"
+    # granite4.2:8b is the standard offline model for this project. The smaller granite4.2:3b was
+    # removed on 02-Oct-2026: it mis-mapped the short-term grade (returned "AA+" where A1+ was
+    # required) and was credulous of management's own framing, whereas 8b returns the correct
+    # short-term grade and reasons to the right outlook. 8b is slower on CPU - keep --with-docs /
+    # --with-skills context bounded (the defaults are sized for it) and allow a long --ollama-timeout.
+    return "granite4.2:8b"
 
 
 OLLAMA_DEFAULT_MODEL = _ollama_default_model()
 
 
 def _default_engine():
-    """The web Settings 'run_mode' choice -> the default --engine: offline -> 'ollama', else 'both'."""
+    """The web Settings 'run_mode' choice -> the default --engine: offline -> 'embedded'
+    (in-process llama.cpp, no server), else 'both'."""
     try:
         rm = json.loads((ROOT / "webapp" / "ui_prefs.json")
                         .read_text(encoding="utf-8")).get("run_mode")
         if rm == "offline":
-            return "ollama"
+            return "embedded"
     except Exception:                                                     # noqa: BLE001
         pass
     return "both"
@@ -501,18 +830,20 @@ def ollama_models(url=OLLAMA_DEFAULT_URL, timeout=4):
         return []
 
 
-def engine_ollama(slug, mod, R, meta, n_tieouts, model, url=OLLAMA_DEFAULT_URL, timeout=600):
+def engine_ollama(slug, mod, R, meta, n_tieouts, model, url=OLLAMA_DEFAULT_URL, timeout=600,
+                  with_docs=False, with_skills=False):
     import urllib.error
     import urllib.request
 
-    prompt = build_prompt(slug, mod, R, meta, n_tieouts)
+    prompt = build_prompt(slug, mod, R, meta, n_tieouts, with_docs=with_docs,
+                          with_skills=with_skills)
     payload = {
         "model": model,
         "stream": False,
         "format": SCHEMA,                 # Ollama structured output - constrains to the schema
         "think": False,                   # skip the chain-of-thought trace: we want the JSON
         "options": {"temperature": 0,     # object, not a reasoning essay. On a THINKING model
-                    "num_ctx": 8192},      # (granite, qwen3, ...) generating the unused trace on
+                    "num_ctx": 12288 if (with_docs or with_skills) else 8192},  # extra context
         "messages": [{"role": "system", "content": SYSTEM},   # CPU is the whole bottleneck - it
                      {"role": "user", "content": prompt}],     # was the 2.5-min-vs-10-min-timeout
     }                                                          # difference on granite4.2:3b.
@@ -562,6 +893,8 @@ def engine_ollama(slug, mod, R, meta, n_tieouts, model, url=OLLAMA_DEFAULT_URL, 
     if missing:
         return {"engine": "ollama", "available": False,
                 "reason": "response missing required field(s): %s" % ", ".join(missing)}
+
+    _apply_st_guard(data)   # fix a LONG-TERM symbol wrongly returned in the short-term field
 
     data.update({
         "engine": "ollama", "available": True, "model": model, "effort": "n/a (local)",
@@ -928,7 +1261,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("slug", nargs="?", help="case folder name under Companies/")
-    ap.add_argument("--engine", choices=["local", "api", "ollama", "agent", "both"],
+    ap.add_argument("--engine", choices=["local", "api", "ollama", "embedded", "agent", "both"],
                     default=_default_engine(),
                     help="default follows the web Settings Online/Offline mode (online->both, "
                          "offline->ollama); 'ollama' is a fully OFFLINE model view (local model, "
@@ -953,6 +1286,17 @@ def main():
                          % OLLAMA_DEFAULT_MODEL)
     ap.add_argument("--ollama-url", default=OLLAMA_DEFAULT_URL,
                     help="Ollama server URL (default %r or $OLLAMA_HOST)" % OLLAMA_DEFAULT_URL)
+    ap.add_argument("--with-docs", action="store_true",
+                    help="offline (ollama) only: also feed the model bounded QUALITATIVE excerpts "
+                         "from the case documents (governance, management, events, auditor, "
+                         "strategy) so it can judge what the ratios cannot show. Financial figures "
+                         "still come ONLY from the verified engine - the model is told never to "
+                         "read a number out of the narrative. Off by default (CLAUDE.md §8b).")
+    ap.add_argument("--with-skills", action="store_true",
+                    help="offline (ollama) only: also give the model the RATING CRAFT and the "
+                         "agency's own CRITERIA for this sector (core/supplementary factors, "
+                         "notching, outlook rules) - the methodology the online agent carries. "
+                         "Fixed criteria text, no issuer figures. Off by default.")
     ap.add_argument("--ollama-timeout", type=int, default=600,
                     help="seconds to allow the local model to respond (default 600)")
     ap.add_argument("--set-key", action="store_true",
@@ -1138,10 +1482,18 @@ def main():
         print("ollama model  : %s (offline, no key)" % args.ollama_model)
         results["ollama"] = engine_ollama(args.slug, mod, R, meta, n_tieouts,
                                           args.ollama_model, args.ollama_url,
-                                          timeout=args.ollama_timeout)
+                                          timeout=args.ollama_timeout,
+                                          with_docs=args.with_docs,
+                                          with_skills=args.with_skills)
+    if args.engine == "embedded":
+        print("offline model : embedded llama.cpp (in-process, no server)")
+        results["embedded"] = engine_embedded(args.slug, mod, R, meta, n_tieouts,
+                                              with_docs=args.with_docs,
+                                              with_skills=args.with_skills,
+                                              model_hint=args.ollama_model)
 
     print()
-    for name in ("local", "api", "ollama"):
+    for name in ("local", "api", "ollama", "embedded"):
         r = results.get(name)
         if not r:
             continue
@@ -1174,7 +1526,7 @@ def main():
                   % (r["usage"]["input_tokens"], r["usage"]["output_tokens"]))
 
     lo = results.get("local", {})
-    model_res = results.get("api") or results.get("ollama") or {}
+    model_res = results.get("api") or results.get("ollama") or results.get("embedded") or {}
     if lo.get("available") and model_res.get("available"):
         model_name = model_res.get("engine", "model")
         gap = notch_gap(lo["long_term"], model_res["long_term_grade"])

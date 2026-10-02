@@ -816,7 +816,15 @@ header nav { display:flex; gap:2px; margin-left:10px; }
 header nav a { color:#c3d0ea; font-size:14px; padding:7px 13px; border-radius:7px; transition:background .15s,color .15s; }
 header nav a:hover { background:rgba(255,255,255,.08); color:#fff; text-decoration:none; }
 header nav a.active { background:rgba(255,255,255,.14); color:#fff; font-weight:600; }
-header .sub { font-family:var(--mono); color:#93a6cc; font-size:11.5px; letter-spacing:.06em; margin-left:auto; }
+header .sub { font-family:var(--mono); color:#93a6cc; font-size:11.5px; letter-spacing:.06em; margin-left:16px; }
+.modesw { margin-left:auto; display:flex; align-items:center; gap:0; background:rgba(0,0,0,.22);
+          border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:2px; }
+.modesw .modesw-lbl { color:#93a6cc; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+          padding:0 8px 0 4px; }
+.modesw button { font:inherit; font-size:12.5px; font-weight:600; color:#c3d0ea; background:transparent;
+          border:0; border-radius:6px; padding:5px 12px; cursor:pointer; transition:background .15s,color .15s; }
+.modesw button:hover { color:#fff; }
+.modesw button.on { background:linear-gradient(135deg,#12a0ac,#15c7b8); color:#06231f; }
 main { max-width:1120px; margin:28px auto 70px; padding:0 20px; }
 h1 { font-family:var(--serif); font-size:30px; font-weight:700; margin-bottom:5px; letter-spacing:-.02em; line-height:1.1; }
 h2 { font-family:var(--serif); font-size:20px; margin:30px 0 10px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:10px; letter-spacing:-.01em; }
@@ -921,6 +929,11 @@ pre.cmd { background:#1b2a4a; color:#dfe8f7; padding:11px 14px; border-radius:8p
     <a href="{{ url_for('process_flow') }}"{{ ' class=active' if active=='process' else '' }}>Process Flow</a>
     <a href="{{ url_for('settings') }}"{{ ' class=active' if active=='settings' else '' }}>Settings</a>
   </nav>
+  <form class="modesw" method="post" action="{{ url_for('settings_run_mode') }}" title="Online uses the Claude API (needs a key); Offline runs the built-in model in-process (no key, no internet, no Ollama).">
+    <span class="modesw-lbl">Mode</span>
+    <button type="submit" name="run_mode" value="online"{{ ' class=on' if run_mode=='online' else '' }}>Online</button>
+    <button type="submit" name="run_mode" value="offline"{{ ' class=on' if run_mode=='offline' else '' }}>Offline</button>
+  </form>
   <span class="sub">ICRA &middot; CRISIL &middot; CareEdge</span>
 </header>
 <main>
@@ -1027,7 +1040,8 @@ document.querySelectorAll('form.upform').forEach(f => {
 
 
 def page(title: str, body: str, active: str = ""):
-    return render_template_string(PAGE, title=title, body=body, active=active)
+    run_mode = (_read_pref().get("run_mode") or "online")
+    return render_template_string(PAGE, title=title, body=body, active=active, run_mode=run_mode)
 
 
 # --------------------------------------------------------------------- views
@@ -2176,12 +2190,14 @@ def settings():
     mode_opts = "".join(
         '<option value="%s"%s>%s</option>' % (v, " selected" if v == run_mode else "", lbl)
         for v, lbl in (("online", "Online &mdash; Claude API (needs a key)"),
-                       ("offline", "Offline &mdash; local Ollama model (no key, no internet)")))
+                       ("offline", "Offline &mdash; built-in model, in-process (no key, no internet, no Ollama)")))
     if run_mode == "offline":
-        primary_cmd = ("python tools/rate_engine.py &lt;case-slug&gt; --engine ollama "
-                       "--ollama-model " + _e(ollama_chosen))
-        mode_note = ("Offline: the scorecard + the local model <b>" + _e(ollama_chosen)
-                     + "</b> &mdash; no key, no internet.")
+        primary_cmd = ("python tools/rate_engine.py &lt;case-slug&gt; --engine embedded "
+                       "--with-docs --with-skills")
+        mode_note = ("Offline: the scorecard + the <b>built-in model, run in-process</b> "
+                     "(llama.cpp loads the project's own weights) &mdash; no key, no internet, "
+                     "no Ollama server. Add <code>--with-docs --with-skills</code> for the "
+                     "documents-and-criteria-aware view.")
     else:
         primary_cmd = ("python tools/rate_engine.py &lt;case-slug&gt; --engine both --model "
                        + _e(chosen))
@@ -2353,8 +2369,9 @@ def settings_run_mode():
         flash("Pick Online or Offline - nothing changed.")
         return redirect(url_for("settings"))
     _write_pref(run_mode=mode)
-    flash("Mode set to %s." % mode)
-    return redirect(url_for("settings"))
+    flash("Mode set to %s." % ("Offline — built-in model, in-process" if mode == "offline"
+                               else "Online — Claude API"))
+    return redirect(request.referrer or url_for("settings"))
 
 
 if __name__ == "__main__":
