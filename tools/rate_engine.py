@@ -566,23 +566,40 @@ MODEL_URL = os.environ.get(
     "https://huggingface.co/ibm-granite/granite-4.1-8b-GGUF/resolve/main/granite-4.1-8b-Q4_K_M.gguf")
 
 
-def _download(url, dst, verbose=True):
-    """Stream a file to dst atomically (.part -> rename), printing progress. Raises on failure."""
+def _download(url, dst, verbose=True, progress=None):
+    """Stream a file to dst atomically (.part -> rename). RESUMES a partial .part with an HTTP
+    Range request, so a dropped connection does not restart a 5 GB download from zero.
+    `progress(done_bytes, total_bytes)` is called as it goes. Raises on failure."""
+    import urllib.error
     import urllib.request
     dst = Path(dst)
     dst.parent.mkdir(parents=True, exist_ok=True)
     tmp = dst.with_name(dst.name + ".part")
-    req = urllib.request.Request(url, headers={"User-Agent": "credit-rating-tool"})
-    with urllib.request.urlopen(req, timeout=60) as r:          # follows HF's CDN redirect
-        total = int(r.headers.get("Content-Length") or 0)
-        done = 0
-        with open(tmp, "wb") as f:
+    have = tmp.stat().st_size if tmp.exists() else 0
+    headers = {"User-Agent": "credit-rating-tool"}
+    if have:
+        headers["Range"] = "bytes=%d-" % have
+    try:
+        r = urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=60)
+    except urllib.error.HTTPError as e:
+        if e.code == 416 and have:                               # .part is already the whole file
+            tmp.replace(dst)
+            return str(dst)
+        raise
+    with r:                                                      # follows HF's CDN redirect
+        if have and r.status != 206:                             # server ignored Range: start over
+            have = 0
+        total = have + int(r.headers.get("Content-Length") or 0)
+        done = have
+        with open(tmp, "ab" if have else "wb") as f:
             while True:
                 chunk = r.read(1 << 20)                         # 1 MiB
                 if not chunk:
                     break
                 f.write(chunk)
                 done += len(chunk)
+                if progress:
+                    progress(done, total)
                 if verbose and total:
                     print("\r[model] downloading %3d%%  (%.2f / %.2f GB)"
                           % (done * 100 // total, done / 1e9, total / 1e9), end="", flush=True)
@@ -592,7 +609,7 @@ def _download(url, dst, verbose=True):
     return str(dst)
 
 
-def ensure_model(model=None, verbose=True):
+def ensure_model(model=None, verbose=True, progress=None):
     """Make sure an offline GGUF exists ON THIS DEVICE, into <project>/models/.
 
     The weights are 5+ GB and cannot live in git (GitHub rejects >100 MB; LFS caps below this
@@ -632,8 +649,9 @@ def ensure_model(model=None, verbose=True):
             print("[model] no offline model on this device; downloading it once (~5 GB).\n"
                   "        %s" % MODEL_URL)
         try:
-            return _download(MODEL_URL, ROOT / "models" / name, verbose)
+            return _download(MODEL_URL, ROOT / "models" / name, verbose, progress)
         except Exception as e:                                             # noqa: BLE001
+            MODEL_STATE["detail"] = "download failed: %s" % e
             if verbose:
                 print("[model] download failed (%s); trying Ollama..." % e)
     # fallback: provision via Ollama if the CLI is present
@@ -642,7 +660,7 @@ def ensure_model(model=None, verbose=True):
             print("[model] pulling %s via Ollama (one-time)..." % model)
         try:
             subprocess.run(["ollama", "pull", model], check=True, timeout=3600)
-            return ensure_model(model, verbose)    # now resolvable -> localise
+            return ensure_model(model, verbose, progress)    # now resolvable -> localise
         except Exception as e:                                             # noqa: BLE001
             if verbose:
                 print("[model] ollama pull failed: %s" % e)
@@ -653,9 +671,45 @@ def ensure_model(model=None, verbose=True):
     return None
 
 
+# State of the offline-model setup, read by the web app's setup screen.
+#   status: unknown | downloading | ready | failed      done/total: bytes
+MODEL_STATE = {"status": "unknown", "done": 0, "total": 0, "detail": ""}
+
+
+def model_ready():
+    """True when an offline GGUF is usable on this device right now."""
+    return bool(_resolve_gguf())
+
+
+def start_model_setup():
+    """Download the offline model in a BACKGROUND thread if it is missing; return immediately.
+    Safe to call repeatedly - a download already running is left alone."""
+    import threading
+    if model_ready():
+        MODEL_STATE.update(status="ready", detail="")
+        return
+    if MODEL_STATE["status"] == "downloading":
+        return
+    MODEL_STATE.update(status="downloading", done=0, total=0, detail="")
+
+    def work():
+        try:
+            path = ensure_model(verbose=False,
+                                progress=lambda d, t: MODEL_STATE.update(done=d, total=t))
+            if path:
+                MODEL_STATE.update(status="ready", detail="")
+            else:
+                MODEL_STATE.update(status="failed",
+                                   detail=MODEL_STATE["detail"] or "could not download the model")
+        except Exception as e:                                             # noqa: BLE001
+            MODEL_STATE.update(status="failed", detail=str(e))
+    threading.Thread(target=work, daemon=True).start()
+
+
 def provision(verbose=True):
     """On-start housekeeping so the tool works on any device: pull the latest code from the repo,
-    then make sure the offline model is present. Both best-effort; neither blocks startup."""
+    then start fetching the offline model in the background if it is missing. Neither blocks
+    startup - the web app serves immediately and shows the download on its setup screen."""
     import subprocess
     try:
         r = subprocess.run(["git", "-C", str(ROOT), "pull", "--ff-only"],
@@ -666,7 +720,10 @@ def provision(verbose=True):
     except Exception as e:                                                 # noqa: BLE001
         if verbose:
             print("[sync] git pull skipped (%s)" % e)
-    ensure_model(verbose=verbose)
+    start_model_setup()
+    if verbose and MODEL_STATE["status"] == "downloading":
+        print("[model] offline model not found - downloading in the background (~5 GB); "
+              "progress is shown in the tool")
 
 
 def _embedded_schema():

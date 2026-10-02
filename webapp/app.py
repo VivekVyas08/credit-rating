@@ -2381,6 +2381,106 @@ def settings_run_mode():
     return redirect(request.referrer or url_for("settings"))
 
 
+# ------------------------------------------------------------ offline-model setup screen
+# On start the tool checks for the offline model. Present -> straight into the tool. Missing ->
+# the server still comes up at once, the download runs in a background thread, and every page
+# lands here until it finishes (or the operator chooses Online mode). The gate is switched on
+# only when the app is run as a server (__main__), so the test client is never redirected.
+_SETUP_ENDPOINTS = {"setup", "setup_status", "setup_start", "setup_skip", "static"}
+
+
+@app.before_request
+def _model_gate():
+    if not app.config.get("MODEL_GATE") or app.config.get("SETUP_SKIPPED"):
+        return None
+    if request.endpoint in _SETUP_ENDPOINTS:
+        return None
+    if _rate_engine().model_ready():
+        return None
+    return redirect(url_for("setup"))
+
+
+def _setup_state():
+    RE = _rate_engine()
+    st = dict(RE.MODEL_STATE)
+    if RE.model_ready():
+        st["status"] = "ready"
+    elif st["status"] in ("unknown", "ready"):
+        st["status"] = "missing"                       # not downloading and not on disk
+    st["pct"] = int(st["done"] * 100 / st["total"]) if st.get("total") else 0
+    st["done_gb"] = round(st.get("done", 0) / 1e9, 2)
+    st["total_gb"] = round(st.get("total", 0) / 1e9, 2)
+    return st
+
+
+@app.get("/setup")
+def setup():
+    if _rate_engine().model_ready():
+        return redirect(url_for("agency_picker"))
+    body = """
+<h1>Setting up the offline model</h1>
+<p class="mut">The tool rates offline with a built-in model (about 5.35 GB). It is not on this
+machine yet, so it is being downloaded once. You can leave this page open - the tool opens by
+itself when the download finishes.</p>
+<div class="card" style="max-width:640px">
+  <div id="st-line" style="font-weight:600;margin-bottom:10px">Checking...</div>
+  <div style="background:#e6ebf3;border-radius:8px;height:16px;overflow:hidden">
+    <div id="st-bar" style="height:16px;width:0%%;background:linear-gradient(135deg,#12a0ac,#15c7b8);transition:width .4s"></div>
+  </div>
+  <div id="st-sub" class="mut" style="margin-top:8px"></div>
+  <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+    <form method="post" action="%(start)s" id="st-start" style="display:none">
+      <button class="btn" type="submit">Download offline model (5.35 GB)</button></form>
+    <form method="post" action="%(skip)s">
+      <button class="btn" type="submit" style="background:#5b6b8c">Continue in Online mode instead</button></form>
+  </div>
+</div>
+<script>
+(function(){
+  var line=document.getElementById('st-line'), bar=document.getElementById('st-bar'),
+      sub=document.getElementById('st-sub'), start=document.getElementById('st-start');
+  function tick(){
+    fetch('%(status)s').then(function(r){return r.json()}).then(function(s){
+      if(s.status==='ready'){ line.textContent='Offline model ready - opening the tool...';
+        bar.style.width='100%%'; window.location='%(home)s'; return; }
+      if(s.status==='downloading'){ start.style.display='none';
+        line.textContent='Downloading the offline model... '+s.pct+'%%';
+        bar.style.width=s.pct+'%%';
+        sub.textContent=s.total_gb? (s.done_gb+' GB of '+s.total_gb+' GB') : 'Connecting...'; }
+      else { start.style.display='block'; bar.style.width='0%%';
+        line.textContent=(s.status==='failed')?'The download did not complete.':'The offline model is not on this machine.';
+        sub.textContent=s.detail||'Press Download to fetch it (a partial download resumes where it stopped).'; }
+      setTimeout(tick,1500);
+    }).catch(function(){ setTimeout(tick,3000); });
+  }
+  tick();
+})();
+</script>""" % {"start": url_for("setup_start"), "skip": url_for("setup_skip"),
+                 "status": url_for("setup_status"), "home": url_for("agency_picker")}
+    return page("Offline model setup", body, active="")
+
+
+@app.get("/setup/status")
+def setup_status():
+    return jsonify(_setup_state())
+
+
+@app.post("/setup/start")
+def setup_start():
+    _rate_engine().start_model_setup()
+    return redirect(url_for("setup"))
+
+
+@app.post("/setup/skip")
+def setup_skip():
+    # Online needs no local model. Any download already running carries on in the background,
+    # so Offline becomes available later without another visit here.
+    _write_pref(run_mode="online")
+    app.config["SETUP_SKIPPED"] = True
+    flash("Continuing in Online mode. Switch to Offline once the model has downloaded.")
+    return redirect(url_for("agency_picker"))
+
+
 if __name__ == "__main__":
     import os
     # threaded=True: upload conversion runs in a background thread while the browser polls
@@ -2392,9 +2492,10 @@ if __name__ == "__main__":
     # debugger allows in-browser code execution, neither of which belongs in normal use. The
     # tool is localhost-only either way.
     dev = os.environ.get("RATING_DEV") == "1"
-    # On start, auto-connect with the repo (pull latest code) and make sure the offline model is
-    # present on this device - so a fresh clone on any machine just works. Best-effort, never
-    # blocks startup. Skip under the dev auto-reloader's watcher child (WERKZEUG_RUN_MAIN set)
+    app.config["MODEL_GATE"] = True      # show the setup screen while the offline model is missing
+    # On start, auto-connect with the repo (pull latest code) and, if the offline model is not on
+    # this device, start downloading it in the background - so a fresh clone on any machine just
+    # works. Best-effort, never blocks startup. Skip under the dev auto-reloader's watcher child (WERKZEUG_RUN_MAIN set)
     # and when RATING_NO_SYNC=1. The 5GB weights are provisioned here, not shipped in git.
     if os.environ.get("RATING_NO_SYNC") != "1" and os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         try:
