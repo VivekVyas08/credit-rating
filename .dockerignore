@@ -1,0 +1,6 @@
+# The 5+ GB weights are never baked into the image - they are mounted or auto-downloaded at runtime.
+models/
+.git/
+**/__pycache__/
+**/*.pyc
+*.part

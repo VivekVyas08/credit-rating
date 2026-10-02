@@ -1,0 +1,5 @@
+# Shell scripts: store bytes verbatim (never convert line endings), so they keep LF and do not
+# break on macOS/Linux ("bad interpreter: /bin/bash^M"). Windows batch files keep CRLF.
+*.command -text
+*.sh      -text
+*.bat     text eol=crlf

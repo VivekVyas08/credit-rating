@@ -19,6 +19,13 @@
 !/tools/
 !/.claude/
 
+# launchers, dependency manifest and container setup (needed to run the tool on any machine)
+!/requirements.txt
+!/Dockerfile
+!/.dockerignore
+!/Start Credit Rating Tool.bat
+!/Start Credit Rating Tool.command
+
 # --- authored knowledge: conventions files + Docs (added on request) ---
 # Only the project's OWN authored documents are re-included; the agencies' copyrighted
 # corpus and corpus dumps/scratch stay out.
@@ -59,3 +66,6 @@ __pycache__/
 *.pdf
 /webapp/ui_prefs.json
 /.claude/settings.local.json
+
+# git config files
+!/.gitattributes

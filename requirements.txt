@@ -1,0 +1,9 @@
+# Credit Rating tool dependencies (works on any system: pip install -r requirements.txt).
+# For llama-cpp-python's CPU wheel, add:  --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+flask
+markdown
+openpyxl
+pymupdf
+pymupdf4llm
+python-docx
+llama-cpp-python
