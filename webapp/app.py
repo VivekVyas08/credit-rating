@@ -2192,6 +2192,9 @@ def settings():
             'pull one &mdash; e.g. <code>ollama pull granite4.2:8b</code> &mdash; and it will '
             'appear here to select.</p>')
 
+    sync = dict(RE.SYNC_STATE)
+    sync_pill = "ok" if sync["status"] in ("ok", "updated") else "warn"
+
     # Online/offline run mode: what a bare `rate_engine.py <slug>` (no --engine) does.
     run_mode = _read_pref().get("run_mode") or "offline"
     mode_opts = "".join(
@@ -2286,9 +2289,20 @@ def settings():
         '<select name="run_mode" aria-label="Run mode">' + mode_opts + '</select>'
         '<button class="btn" type="submit">Save mode</button></form>'
         '<p class="mut" style="margin-top:8px">Choose how a rating runs. <b>Online</b> uses the '
-        'Claude API model (needs the key above); <b>Offline</b> uses the local Ollama model (no '
+        'Claude API model (needs the key above); <b>Offline</b> uses the built-in model (no '
         'key, no internet). The deterministic scorecard runs in both. This sets the default for a '
         'bare <code>python tools/rate_engine.py &lt;slug&gt;</code> and the command shown below.</p>'
+        '</div>'
+
+        '<h2>Code sync</h2>'
+        '<div class="card">'
+        '<p style="margin:0 0 8px"><span class="pill ' + sync_pill + '">' + _e(sync["status"])
+        + '</span> ' + _e(sync["detail"]) + '</p>'
+        '<form method="post" action="' + url_for('settings_sync') + '" class="rowform">'
+        '<button class="btn" type="submit">Sync now</button></form>'
+        '<p class="mut" style="margin-top:8px">On start the tool pulls the latest code from its '
+        'repository. If that could not happen, the reason is shown here instead of being lost in '
+        'the console. Pulled code takes effect the next time the tool is started.</p>'
         '</div>'
 
         '<h2>Running a rating</h2>'
@@ -2471,6 +2485,13 @@ def setup_start():
     return redirect(url_for("setup"))
 
 
+@app.post("/settings/sync")
+def settings_sync():
+    st = _rate_engine().sync_repo()
+    flash("Code sync %s: %s" % (st["status"], st["detail"]))
+    return redirect(url_for("settings"))
+
+
 @app.post("/setup/skip")
 def setup_skip():
     # Online needs no local model. Any download already running carries on in the background,
@@ -2497,9 +2518,9 @@ if __name__ == "__main__":
     # this device, start downloading it in the background - so a fresh clone on any machine just
     # works. Best-effort, never blocks startup. Skip under the dev auto-reloader's watcher child (WERKZEUG_RUN_MAIN set)
     # and when RATING_NO_SYNC=1. The 5GB weights are provisioned here, not shipped in git.
-    if os.environ.get("RATING_NO_SYNC") != "1" and os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         try:
-            _rate_engine().provision()
+            _rate_engine().provision(sync=os.environ.get("RATING_NO_SYNC") != "1")
         except Exception as _e:                                           # noqa: BLE001
             print("[startup] provision skipped: %s" % _e)
     # Bind 127.0.0.1 by default (localhost-only); RATING_HOST=0.0.0.0 to serve from a container.

@@ -699,7 +699,7 @@ Two scripts now hold the enforcement: `preflight.py` (Step 1a, entry gate) and `
 `rate_engine.py` produces a rating outcome two independent ways and reports the gap. Full
 documentation in `Docs/RATING_ENGINES.md`.
 
-    python tools/rate_engine.py <case-slug> [--engine local|api|ollama|both] [--model ID] [--ollama-model NAME] [--effort ...]
+    python tools/rate_engine.py <case-slug> [--engine local|api|embedded|ollama|both] [--model ID] [--with-docs] [--with-skills] [--effort ...]
 
   * **local** - the filled Rating_Scorecard workbook evaluated offline through its own formula
     chain. No key, no model, byte-identical every run. This is the Step 12b anchor, made
@@ -714,6 +714,32 @@ documentation in `Docs/RATING_ENGINES.md`.
     `--ollama-model` (or $OLLAMA_MODEL). The division-of-labour rule below binds it identically -
     it receives the verified computed ratios, never the source documents, and its schema admits
     no financial figure.
+
+  * **embedded** (added 02-Oct-2026) - the DEFAULT offline route: the same prompt and SCHEMA,
+    run IN-PROCESS with llama-cpp-python on a GGUF file under `models/`. No Ollama, no server,
+    no key. It is what the web app's Mode switch selects for "Offline", and Offline is the
+    default wherever no preference is stored. The model file (about 5.35 GB, never in git) is
+    downloaded once by the tool: on start the web app checks for it and, if it is missing, shows
+    a setup screen with progress while it downloads in the background (resumable).
+
+  **What the offline engines are given, and the checks on what they return (02/03-Oct-2026).**
+  A small local model is unreliable in specific, observed ways, and each has a mechanical guard:
+    - *Direction and meaning are pre-computed.* `trend_facts()` derives, from the verified suite,
+      which way each metric moved and whether that is FAVOURABLE or ADVERSE, and the prompt
+      states them as facts. (granite4.2:8b had listed a cost-to-income ratio that rose from 46%
+      to 61% as a strength.) `_consistency_warnings()` flags any strength or weakness that
+      contradicts those trends.
+    - *Figures in the prose are checked.* `_figure_warnings()` lists any number >= 100 the model
+      wrote that is not in the verified suite. (It had written 54,341,906 for 543,419.06.)
+    - *The short-term grade is derived, not trusted,* when the model returns a long-term symbol
+      in that field (`_apply_st_guard`).
+    - `--with-docs` adds bounded, risk-weighted QUALITATIVE excerpts from the case documents
+      (governance, management, auditor, events) and `--with-skills` adds the agency's criteria
+      and the rating craft rules. Both are opt-in. **They do not relax the division of labour
+      below:** the prompt forbids taking any figure from the narrative, and every number still
+      comes only from the verified engine.
+  A warning from any of these guards means the model's supporting text is not usable as written;
+  the grade and outlook remain an input to the committee, never the rating.
 
   * **agent** - selected by entering the sentinel `1234` as the API key (or `--engine agent`).
     Hands the job to a local Claude Code agent that inherits this file, the project skills and

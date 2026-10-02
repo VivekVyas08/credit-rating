@@ -247,6 +247,128 @@ def ratio_table(mod, R):
     return "\n".join(lines)
 
 
+# --------------------------------------------------------- pre-computed trends (verified)
+# A small local model is poor at two things a rating view depends on: working out which way a
+# series moved, and whether that is good or bad. granite4.2:8b listed "cost-to-income improving
+# from 61.43%" as a STRENGTH when it had risen from 46% to 61%, and called 2.51% "below" 1.5%.
+# So direction and credit meaning are derived HERE, from the verified figures, and handed to the
+# model as facts; _consistency_warnings() then flags any strength/weakness that contradicts them.
+# Polarity is stated only for labels recognised below - an unknown label gets a direction and no
+# meaning, because a guessed polarity would mislead more than a missing one.
+_NEUTRAL = ("tier ii", "payable", "creditor")
+_FAV_IF_UP_FIRST = ("/td", "/total debt", "coverage", "pcr")
+_ADV_IF_UP = ("gnpa", "nnpa", "npa", "stage 3", "stage iii", "cost-to-income", "cost to income",
+              "credit cost", "provision", "gearing", "tol/tnw", "debt/", "td/", "total debt",
+              "net debt", "cost of deposits", "cost of funds", "interest expended",
+              "operating expenses", "days", "slippage")
+_FAV_IF_UP = ("profit", "pat", "income", "revenue", "nii", "margin", "nim", "roa", "roe", "roce",
+              "ronw", "crar", "cet", "tier i", "capital", "net worth", "tnw", "casa", "deposits",
+              "advances", "aum", "current ratio", "cash", "lcr", "nsfr", "ebitda", "opbdit",
+              "pbildt", "turnover", "balance sheet", "eps", "gca", "interest earned")
+
+
+def _polarity(label):
+    """+1 if a rise in this metric is favourable, -1 if adverse, 0 if unknown/neutral."""
+    low = label.lower().strip()
+    if low.startswith("tax") or "for tax" in low or any(k in low for k in _NEUTRAL):
+        return 0
+    if any(k in low for k in _FAV_IF_UP_FIRST):
+        return 1
+    if any(k in low for k in _ADV_IF_UP):
+        return -1
+    if any(k in low for k in _FAV_IF_UP):
+        return 1
+    return 0
+
+
+def _direction(a, b):
+    if a is None or b is None:
+        return 0
+    base = abs(a) if a else max(abs(b), 1e-9)
+    rel = (b - a) / base
+    return 0 if abs(rel) < 0.02 else (1 if rel > 0 else -1)
+
+
+def trend_facts(mod, R):
+    """One fact per metric with >= 2 periods: values, overall and latest-step direction, meaning."""
+    years = list(getattr(mod, "YEARS", sorted(R)))
+    labels = []
+    for y in years:
+        for k, v in R.get(y, {}).items():
+            if isinstance(v, (int, float)) and k not in labels:
+                labels.append(k)
+    word = {1: "ROSE", -1: "FELL", 0: "FLAT"}
+    mean = {1: "FAVOURABLE", -1: "ADVERSE", 0: ""}
+    out = []
+    for k in labels:
+        series = [(y, R[y][k]) for y in years if isinstance(R.get(y, {}).get(k), (int, float))]
+        if len(series) < 2:
+            continue
+        overall = _direction(series[0][1], series[-1][1])
+        latest = _direction(series[-2][1], series[-1][1])
+        pol = _polarity(k)
+        out.append({"label": k, "series": series,
+                    "overall": word[overall], "latest": word[latest],
+                    "meaning": mean[overall * pol], "latest_meaning": mean[latest * pol]})
+    return out
+
+
+def trend_lines(facts):
+    lines = []
+    for f in facts:
+        vals = " -> ".join("%s %.2f" % (y, v) for y, v in f["series"])
+        txt = "  %s: %s | overall %s" % (f["label"], vals, f["overall"])
+        if f["meaning"]:
+            txt += " (%s)" % f["meaning"]
+        if f["latest"] != f["overall"]:
+            txt += "; latest year %s" % f["latest"]
+        lines.append(txt)
+    return "\n".join(lines)
+
+
+def _label_base(label):
+    return re.sub(r"\s*\(.*?\)|\s+-\s+.*$", "", label).strip().lower()
+
+
+def _consistency_warnings(data, facts):
+    """Strengths resting on a metric whose verified trend is ADVERSE (overall AND in the latest
+    year), and weaknesses resting on one that is FAVOURABLE on both - the model contradicting
+    the figures it was given. The metric is the first one named in the bullet."""
+    out = []
+    for field, clash, kind in (("key_strengths", "ADVERSE", "strength"),
+                               ("key_weaknesses", "FAVOURABLE", "weakness")):
+        for bullet in data.get(field, []) or []:
+            low = str(bullet).lower()
+            hits = []
+            for f in facts:
+                b = _label_base(f["label"])
+                if len(b) < 3:
+                    continue
+                m = re.search(r"(?<![a-z0-9])" + re.escape(b) + r"(?![a-z0-9])", low)
+                if m:
+                    hits.append((m.start(), -len(b), f))
+            if not hits:
+                continue
+            f = min(hits, key=lambda h: (h[0], h[1]))[2]
+            if f["meaning"] == clash and f["latest_meaning"] == clash:
+                out.append((field, bullet, "%s \"%s\" - but %s %s (%s)"
+                            % (kind, str(bullet)[:90], f["label"], f["overall"], f["meaning"])))
+    return out
+
+
+def _apply_consistency(data, facts):
+    """Drop every strength/weakness that contradicts the verified trends, and record why.
+    A bullet the figures disprove must not be left standing beside a warning - the pre-computed
+    trends reduced these but did not eliminate them (granite4.2:8b still listed a cost ratio that
+    rose from 46% to 61% as a strength), so the deterministic check has the last word."""
+    bad = _consistency_warnings(data, facts)
+    for field, bullet, _msg in bad:
+        data[field] = [b for b in data.get(field, []) if b != bullet]
+    if bad:
+        data["consistency_warnings"] = [m for _f, _b, m in bad]
+    return data
+
+
 # ----------------------------------------------------------------------- local engine
 def engine_local(case_dir):
     """Evaluate the filled scorecard's OWN formula chain. Deterministic, offline."""
@@ -706,20 +828,58 @@ def start_model_setup():
     threading.Thread(target=work, daemon=True).start()
 
 
-def provision(verbose=True):
-    """On-start housekeeping so the tool works on any device: pull the latest code from the repo,
-    then start fetching the offline model in the background if it is missing. Neither blocks
-    startup - the web app serves immediately and shows the download on its setup screen."""
+# Outcome of the last code sync, shown on the Settings page so a skipped sync is never silent.
+#   status: not run | ok | updated | skipped
+SYNC_STATE = {"status": "not run", "detail": "the tool has not tried to sync since it started"}
+
+
+def sync_repo():
+    """Run a fast-forward-only git pull on the tool's own folder, and say plainly what happened.
+
+    Three things used to make this fail without anyone noticing: the folder being owned by a
+    different user than the one running the tool (Docker volumes, shared folders - git refuses
+    with "dubious ownership"), git waiting forever for a username on a machine with no stored
+    credential, and the reason being printed only to a console nobody reads."""
+    import shutil
     import subprocess
+
+    def done(status, detail):
+        SYNC_STATE.update(status=status, detail=detail)
+        return SYNC_STATE
+
+    if not shutil.which("git"):
+        return done("skipped", "git is not installed on this machine")
+    if not (ROOT / ".git").exists():
+        return done("skipped", "this copy is not a git clone (a Docker image or an unzipped copy)")
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0")          # fail fast, never prompt
+    cmd = ["git", "-c", "safe.directory=*", "-C", str(ROOT), "pull", "--ff-only"]
     try:
-        r = subprocess.run(["git", "-C", str(ROOT), "pull", "--ff-only"],
-                           capture_output=True, text=True, timeout=60)
-        msg = (r.stdout or r.stderr or "").strip().splitlines()
-        if verbose:
-            print("[sync] %s" % (msg[-1] if msg else "repo up to date"))
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=60, env=env)
+    except subprocess.TimeoutExpired:
+        return done("skipped", "no answer from the repository within 60 seconds (offline?)")
     except Exception as e:                                                 # noqa: BLE001
+        return done("skipped", str(e))
+    out, err = (r.stdout or "").strip(), (r.stderr or "").strip()
+    if r.returncode == 0:
+        if "Already up to date" in out or not out:
+            return done("ok", "already up to date")
+        return done("updated", "new code was pulled - restart the tool to use it")
+    lines = [ln.strip() for ln in err.splitlines() if ln.strip()]
+    why = next((ln for ln in lines if ln.startswith(("fatal:", "error:"))),
+               lines[-1] if lines else "git pull failed")
+    return done("skipped", why)
+
+
+def provision(verbose=True, sync=True):
+    """On-start housekeeping so the tool works on any device: pull the latest code from the repo,
+    then start fetching the offline model in the background if it is missing. The model download
+    never blocks startup - the web app serves immediately and shows it on its setup screen."""
+    if sync:
+        st = sync_repo()
         if verbose:
-            print("[sync] git pull skipped (%s)" % e)
+            print("[sync] %s: %s" % (st["status"], st["detail"]))
+    else:
+        SYNC_STATE.update(status="skipped", detail="switched off (RATING_NO_SYNC=1)")
     start_model_setup()
     if verbose and MODEL_STATE["status"] == "downloading":
         print("[model] offline model not found - downloading in the background (~5 GB); "
@@ -797,6 +957,7 @@ def engine_embedded(slug, mod, R, meta, n_tieouts, n_ctx=12288,
     fw = _figure_warnings(data, prompt)
     if fw:
         data["figure_warnings"] = fw
+    _apply_consistency(data, trend_facts(mod, R))
     usage = out.get("usage", {}) or {}
     data.update({"engine": "embedded", "available": True,
                  "model": "%s (in-process llama.cpp, no server)" % Path(gguf).stem[:40],
@@ -860,6 +1021,12 @@ def build_prompt(slug, mod, R, meta, n_tieouts, with_docs=False, with_skills=Fal
         "engine reconcile." % n_tieouts,
         "",
         ratio_table(mod, R),
+        "",
+        "PRE-COMPUTED TRENDS, first period -> last period. The direction and its credit meaning "
+        "are ALREADY worked out from the verified figures above - take them as given. Never list "
+        "an ADVERSE item as a strength or a FAVOURABLE item as a weakness, and never describe a "
+        "movement differently from what is stated here:",
+        trend_lines(trend_facts(mod, R)),
         "",
         "DISCLOSED CONVENTIONS AND DIFFERENCES - read these before weighing the numbers:",
     ]
@@ -1101,6 +1268,7 @@ def engine_ollama(slug, mod, R, meta, n_tieouts, model, url=OLLAMA_DEFAULT_URL, 
     fw = _figure_warnings(data, prompt)
     if fw:
         data["figure_warnings"] = fw
+    _apply_consistency(data, trend_facts(mod, R))
 
     data.update({
         "engine": "ollama", "available": True, "model": model, "effort": "n/a (local)",
@@ -1732,10 +1900,12 @@ def main():
                   % (r["usage"]["input_tokens"], r["usage"]["output_tokens"]))
             if r.get("short_term_corrected"):
                 print("       ST GUARD   : %s" % r["short_term_corrected"])
+            for w in r.get("consistency_warnings", []):
+                print("       *** REMOVED - contradicts the verified trends: %s" % w)
             if r.get("figure_warnings"):
                 print("       *** UNVERIFIED FIGURES in the model's prose (not in the verified "
                       "suite - misquoted or model-derived): %s"
-                      % ", ".join("%g" % n for n in r["figure_warnings"]))
+                      % ", ".join("{:,.2f}".format(n) for n in r["figure_warnings"]))
 
     lo = results.get("local", {})
     model_res = results.get("api") or results.get("ollama") or results.get("embedded") or {}

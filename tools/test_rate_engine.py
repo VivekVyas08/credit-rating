@@ -508,6 +508,51 @@ def test_offline_output_guards():
           "a legitimate short-term grade is left alone")
 
 
+def test_trends_and_sync():
+    """Pre-computed trends, the contradiction check built on them, and the visible sync report.
+
+    Regression: granite4.2:8b listed "cost-to-income improving" as a strength when it had risen
+    from 46% to 61%. Direction and meaning are now derived from the verified figures."""
+    print("\n[15] pre-computed trends, contradiction check, sync report")
+    mod = types.SimpleNamespace(YEARS=["FY1", "FY2", "FY3"])
+    R = {"FY1": {"Cost-to-income (%)": 46.1, "CET-1 (%)": 15.8, "Deposits": 384.0, "Tax": 30.0},
+         "FY2": {"Cost-to-income (%)": 58.3, "CET-1 (%)": 15.1, "Deposits": 411.0, "Tax": 10.0},
+         "FY3": {"Cost-to-income (%)": 61.4, "CET-1 (%)": 16.2, "Deposits": 400.0, "Tax": 3.0}}
+    facts = {f["label"]: f for f in RE.trend_facts(mod, R)}
+    check(facts["Cost-to-income (%)"]["overall"] == "ROSE"
+          and facts["Cost-to-income (%)"]["meaning"] == "ADVERSE",
+          "a rising cost ratio is ROSE / ADVERSE")
+    check(facts["CET-1 (%)"]["meaning"] == "FAVOURABLE", "a rising capital ratio is FAVOURABLE")
+    check(facts["Deposits"]["overall"] == "ROSE" and facts["Deposits"]["latest"] == "FELL",
+          "overall and latest-year direction are tracked separately")
+    check(facts["Tax"]["meaning"] == "", "an item with no credit polarity gets a direction only")
+    check(RE._polarity("Profit before tax") == 1 and RE._polarity("GCA/TD (%)") == 1
+          and RE._polarity("TD/OPBDITA (x)") == -1 and RE._polarity("Interest coverage (x)") == 1,
+          "polarity: profit before tax +, GCA/TD +, TD/OPBDITA -, interest coverage +")
+    out = RE._consistency_warnings(
+        {"key_strengths": ["Cost-to-income ratio improving, lowest of the three years",
+                           "Deposits of 400 crore"],
+         "key_weaknesses": ["CET-1 fell in FY2 before rising", "Deposits slipped in the latest year"]},
+        list(facts.values()))
+    check(len(out) == 2 and "Cost-to-income" in out[0][2] and "CET-1" in out[1][2],
+          "flags the adverse metric called a strength and the favourable one called a weakness, "
+          "and nothing else")
+    d = RE._apply_consistency(
+        {"key_strengths": ["Cost-to-income ratio improving", "Deposits of 400 crore"],
+         "key_weaknesses": ["Deposits slipped in the latest year"]}, list(facts.values()))
+    check(d["key_strengths"] == ["Deposits of 400 crore"] and len(d["consistency_warnings"]) == 1
+          and d["key_weaknesses"] == ["Deposits slipped in the latest year"],
+          "the contradicting bullet is removed and recorded; the valid ones are kept")
+    real_root = RE.ROOT
+    try:
+        RE.ROOT = Path(real_root.anchor) / "definitely-not-a-git-clone-xyz"
+        st = RE.sync_repo()
+        check(st["status"] == "skipped" and "not a git clone" in st["detail"],
+              "sync outside a git clone is reported as skipped, with the reason")
+    finally:
+        RE.ROOT = real_root
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -520,7 +565,8 @@ def main():
                test_api_errors, test_divergence, test_key_handling, test_key_storage,
                test_ui_model_pref,
                test_ollama_success, test_ollama_request_shape, test_ollama_errors,
-               test_sdk_credential_detection, test_offline_output_guards):
+               test_sdk_credential_detection, test_offline_output_guards,
+               test_trends_and_sync):
         fn()
     print("\n" + "=" * 78)
     if _failures:

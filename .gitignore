@@ -25,6 +25,7 @@
 !/.claude/
 
 # launchers, dependency manifest and container setup (needed to run the tool on any machine)
+!/README.md
 !/requirements.txt
 !/Dockerfile
 !/.dockerignore
