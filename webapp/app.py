@@ -1538,9 +1538,10 @@ def _unique_path(d: Path, name: str) -> Path:
 def _run_upload_conversion(job_id: str, tasks: list[dict]) -> None:
     """Convert each queued file to Markdown, updating UPLOAD_JOBS as it goes.
 
-    `tasks` items: {"src": Path (in originals/), "dest_dir": Path, "stem": str}. The raw file
-    stays in originals/ regardless of outcome - conversion never deletes the source, so a
-    failed or imperfect conversion can always be redone or read by a person.
+    `tasks` items: {"src": Path (in originals/), "dest_dir": Path, "stem": str}. Once the Markdown
+    is written the uploaded raw copy is dropped (changed 03-Oct-2026: ratings are built from the
+    Markdown only, and kept originals had piled up to 300 MB of PDFs nobody read). A FAILED
+    conversion keeps its raw file in originals/, so nothing is lost and it can be retried.
     """
     with UPLOAD_JOBS_LOCK:
         UPLOAD_JOBS[job_id]["status"] = "running"
@@ -1559,6 +1560,11 @@ def _run_upload_conversion(job_id: str, tasks: list[dict]) -> None:
             markdown = doc_convert.convert(src, _cb)
             out_path = _unique_path(dest_dir, stem + ".md")
             out_path.write_text(markdown, encoding="utf-8")
+            try:                          # this is the tool's own copy; the operator's source file
+                src.unlink()              # (wherever it was uploaded from) is untouched
+                src.parent.rmdir()        # drops originals/ only when it is now empty
+            except OSError:
+                pass
             with UPLOAD_JOBS_LOCK:
                 UPLOAD_JOBS[job_id]["done"] += 1
                 UPLOAD_JOBS[job_id]["converted"].append(out_path.name)
@@ -1576,7 +1582,8 @@ def _run_upload_conversion(job_id: str, tasks: list[dict]) -> None:
 def upload(slug, slot):
     """Accept any file type. Markdown/Excel land in the slot folder as-is; everything this
     project knows how to read (PDF, Word, txt/csv, HTML) is converted to Markdown in the
-    background, with the raw file kept in documents/<slot>/originals/ for provenance. A type
+    background; the raw upload is staged in documents/<slot>/originals/ and removed once its
+    Markdown is written (a failed conversion keeps it there). A type
     with no converter is saved directly in the slot folder, same as before this feature -
     nothing the operator uploads is ever rejected or silently dropped.
     """
