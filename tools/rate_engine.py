@@ -530,14 +530,52 @@ def _resolve_gguf(model=None):
     return None
 
 
+# Default offline weights: the official IBM Granite 4.1 8B GGUF (Q4_K_M, ~5.35 GB), a public
+# auth-free HuggingFace download. Override with $CREDITRATING_GGUF_URL. Used only when no model
+# is already on the device - it is downloaded ONCE into <project>/models/, then reused.
+MODEL_URL = os.environ.get(
+    "CREDITRATING_GGUF_URL",
+    "https://huggingface.co/ibm-granite/granite-4.1-8b-GGUF/resolve/main/granite-4.1-8b-Q4_K_M.gguf")
+
+
+def _download(url, dst, verbose=True):
+    """Stream a file to dst atomically (.part -> rename), printing progress. Raises on failure."""
+    import urllib.request
+    dst = Path(dst)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    tmp = dst.with_name(dst.name + ".part")
+    req = urllib.request.Request(url, headers={"User-Agent": "credit-rating-tool"})
+    with urllib.request.urlopen(req, timeout=60) as r:          # follows HF's CDN redirect
+        total = int(r.headers.get("Content-Length") or 0)
+        done = 0
+        with open(tmp, "wb") as f:
+            while True:
+                chunk = r.read(1 << 20)                         # 1 MiB
+                if not chunk:
+                    break
+                f.write(chunk)
+                done += len(chunk)
+                if verbose and total:
+                    print("\r[model] downloading %3d%%  (%.2f / %.2f GB)"
+                          % (done * 100 // total, done / 1e9, total / 1e9), end="", flush=True)
+    if verbose:
+        print()
+    tmp.replace(dst)
+    return str(dst)
+
+
 def ensure_model(model=None, verbose=True):
     """Make sure an offline GGUF exists ON THIS DEVICE, into <project>/models/.
 
     The weights are 5+ GB and cannot live in git (GitHub rejects >100 MB; LFS caps below this
-    file's size), so a fresh clone has the code but not the model. This provisions it once:
-    reuse a local copy if present, else pull it with Ollama and copy it into the project so the
-    in-process engine is thereafter Ollama-independent. Returns the path, or None with
-    instructions printed. Never raises - a provisioning failure must not stop the tool starting.
+    file's size), so a fresh clone has the code but not the model. This provisions it once and
+    then the in-process engine uses it with no server:
+      1. reuse a project-local models/*.gguf;
+      2. reuse (copy in) a model already downloaded by Ollama;
+      3. DOWNLOAD it automatically from MODEL_URL (no Ollama needed);
+      4. fall back to `ollama pull` if a download URL is unset/unreachable.
+    Returns the path, or None with instructions printed. Never raises - a provisioning failure
+    must not stop the tool starting.
     """
     import shutil
     import subprocess
@@ -557,22 +595,33 @@ def ensure_model(model=None, verbose=True):
             if verbose:
                 print("[model] copy failed (%s); using the existing file at %s" % (e, g))
             return g
-    # nothing on disk: provision via Ollama if available (the one portable downloader we can rely on)
+    # nothing on disk: DOWNLOAD it automatically (no Ollama required)
+    if MODEL_URL:
+        name = MODEL_URL.rsplit("/", 1)[-1] or "offline-model.gguf"
+        if not name.endswith(".gguf"):
+            name += ".gguf"
+        if verbose:
+            print("[model] no offline model on this device; downloading it once (~5 GB).\n"
+                  "        %s" % MODEL_URL)
+        try:
+            return _download(MODEL_URL, ROOT / "models" / name, verbose)
+        except Exception as e:                                             # noqa: BLE001
+            if verbose:
+                print("[model] download failed (%s); trying Ollama..." % e)
+    # fallback: provision via Ollama if the CLI is present
     if shutil.which("ollama"):
         if verbose:
-            print("[model] no offline model found; pulling %s via Ollama (one-time ~5GB)..." % model)
+            print("[model] pulling %s via Ollama (one-time)..." % model)
         try:
             subprocess.run(["ollama", "pull", model], check=True, timeout=3600)
+            return ensure_model(model, verbose)    # now resolvable -> localise
         except Exception as e:                                             # noqa: BLE001
             if verbose:
                 print("[model] ollama pull failed: %s" % e)
-            return None
-        return ensure_model(model, verbose)        # now resolvable -> localise
     if verbose:
-        print("[model] NO offline model on this device. To enable Offline mode, either:\n"
-              "        - install Ollama and run:  ollama pull %s   (the tool copies it in), or\n"
-              "        - copy a .gguf into:  %s\n"
-              "        Online mode (Claude API) works with a key regardless." % (model, ROOT / "models"))
+        print("[model] could not provision an offline model automatically. Set "
+              "CREDITRATING_GGUF_URL to a .gguf, or drop one into %s. Online mode (Claude API) "
+              "works with a key regardless." % (ROOT / "models"))
     return None
 
 
