@@ -1,0 +1,269 @@
+
+
+## **Rating Rationale** 
+
+March 31, 2026 | Mumbai 
+
+# **Seamec Limited** 
+
+_Ratings continues on 'Watch Developing'_ 
+
+### Rating Action 
+
+|**Total Bank Loan Facilities Rated**|**Rs.533 Crore**|
+|---|---|
+|**Long Term Rating**|**Crisil A+/Watch Developing (Continues on 'Rating**<br>**Watch with Developing Implications')**|
+|**Short Term Rating**|**Crisil A1/Watch Developing (Continues on 'Rating**<br>**Watch with Developing Implications')**|
+
+
+
+_Note: None of the Directors on Crisil Ratings Limited’s Board are members of rating committee and thus do not participate in discussion or assignment of any ratings. The Board of Directors also does not discuss any ratings at its meetings. 1 crore = 10 million Refer to Annexure for Details of Instruments & Bank Facilities_ 
+
+### **<u>Detailed Rationale</u>** 
+
+Crisil Ratings continues its ratings on the bank facilities of Seamec Ltd (Seamec) on ‘ **Rating Watch with Developing Implications** ’. 
+
+The rating watch continues to factor in the ongoing restructuring initiatives of Seamec’s parent entity, Hal Offshore Ltd (HAL, 'Crisil A+/Crisil A1/Watch Negative’, holding 72.72% stake in the company) and transfer of vessel, Seamec Anant, from HAL to Seamec. 
+
+The company completed the acquisition of the vessel, Seamec Agastya (erstwhile vessel Nusantara), in August 2025 at a consideration of USD 23 million (~Rs 200 crore), funded through a mix of term loans of Rs 150 crore and internal accruals. The acquisition of the vessel, Seamec Anant, is expected to be completed by the first quarter of fiscal 2027 at a consideration of ~USD 70 million which will be partly funded by debt. 
+
+Meanwhile, HAL has concluded a creditors' meeting on September 19, 2025, as directed by the National Company Law Tribunal (NCLT), to seek approval for its restructuring plan. The proposed scheme involves demerging the vessel and marine business into MMG Marine Engineering Pvt Ltd and the securities investment business (including investment in Seamec) into Rinkpi Finance & Consultants Pvt Ltd, with HAL retaining its engineering, procurement and construction (EPC) business. Both resulting companies, MMG Marine Engineering Pvt Ltd and Rinkpi Finance & Consultants Pvt Ltd, are completely owned by the promoter group. The voting results are being compiled and will be submitted to NCLT for final sanction of the scheme. 
+
+Crisil Ratings will monitor the timely transfer of the Seamec Anant, to Seamec, which could improve the business risk profile of the company. Also, the progress on the structural change at HAL would be assessed while resolving the watch. 
+
+The rating continues to take comfort from the healthy business risk profile of Seamec, backed by its established market position in providing multi-support vessels (MSVs) on charter-hire basis under long-term contracts to offshore exploration and production (E&P) players in India. Revenue from operations has continued to grow at healthy compound annual growth rate (CAGR) of ~29% over fiscals 2021-2024, but there was ~11% degrowth on-year of Rs 682 crore in fiscal 2025, primarily due to unexpected breakdown leading to lower deployment. Revenue in the first nine months of fiscal 2026 have improved by ~ 38% on-year and stood at Rs 625 crore with operating margin at over 38%. 
+
+Revenue growth is expected to be supported by vessel additions and higher deployment rates of owned vessels over the medium term, as business prospects remain healthy amid continued focus on oil E&P activity in India. Furthermore, the previous mandate from the Directorate General of Shipping requiring the replacement of aged vessels have been put on hold as per revised draft order of May 2025. While three of the older vessels which were planned to be sold will continue to operate as per deployed charter hires, the plans to dispose some of the vessels remain under consideration over the medium term and will remain monitored. 
+
+The financial risk profile remains strong, supported by healthy cash accrual, despite capital investments to replace the aged fleet. In the near term, the company’s planned acquisition is estimated to require capex of approximately Rs 800 crore, to be funded through a mix of debt and internal accrual. Despite capex, the gearing is expected to remain comfortable at below 0.5 time in the near term, from 0.21 time as on March 31, 2026. 
+
+These strengths are partially offset by modest scale of operations and exposure to client concentration risks. 
+
+# **<u>Analytical Approach</u>** 
+
+Crisil Ratings has combined the business and financial risk profiles of Seamec and its subsidiaries, as these entities are in a similar line of business with strong operational, managerial and financial linkages. Furthermore, it has applied the parent notch up framework to factor in support from HAL considering its criticality to the parent. 
+
+_Please refer Annexure - List of Entities Consolidated, which captures the list of entities considered and their analytical treatment of consolidation._ 
+
+# **-** **<u>Key Rating Drivers Strengths</u>** 
+
+# Established market presence in the vessel hire business 
+
+Seamec has established market position in providing multipurpose support vessels (MSVs) on charter hire basis to offshore E&P players in India, namely Oil & Natural Gas Corporation Ltd (ONGC). These services continue to be of importance to E&P players, given the increased focus on enhancing output from domestic oilfields and their own ageing assets. While there could be continued requirement for the existing vessels to be owned, future growth opportunities could be limited. With the addition of the vessels, Seamec Agastya, in August 2025 and Seamec Anant planned for the first quarter of fiscal 2027, the risks related to breakdown and redeployment would reduce further strengthening the company’ s position in this industry. 
+
+# Comfortable operating performance 
+
+Long-term contracts spanning 3 to 5 years, that were executed to charter MSVs, offer medium-term visibility for revenue expected from this segment. A healthy gross margin of 50-60% is earned on the MSV fleet. While the company has secured long-term contracts for its MSV fleet and diving support vessel (DSV), barge and bulk carriers are on a short-term/spot basis. Seamec has added the vessel, Seamec Agastya, in August 2025 and is in the process of adding Seamec Anant, which would further reduce the redeployment risk associated with these vessels. The operating margin is susceptible to redeployment risk associated with vessels that are deployed on a spot basis. 
+
+# Moderate financial risk profile 
+
+The financial risk profile remains strong, supported by healthy cash accrual and is expected to remain healthy over the medium term, despite planned capital investments to acquire new vessels. In the near term, the company plans to purchase two new vessels, requiring capex of approximately Rs 800 crore this fiscal, to be funded through a mix of debt and internal accrual. However, the financial metrics are expected to remain comfortable as these vessels are already deployed under long-term contracts providing revenue visibility in the near to medium term. Gearing is expected to remain comfortable at below 5 times in the near term, from 0.21 time as on March 31, 2026, despite increased debt expected this fiscal. 
+
+# **<u>Key Rating Drivers - Weaknesses</u>** 
+
+# Susceptibility of operating performance to redeployment risk, on account of ageing fleet 
+
+As on December 31, 2025, Seamec owns seven vessels and one barge, among which three vessels are more than 40 years old. The company has added another vessel, Seamec Agastya, in August 2025 and is planning acquisition of Seamec Anant in the first quarter of next fiscal. Further, with new guidance from the DSG, older vessels are not planned to be immediately replaced. That said continued deployment would continue to remain a key monitorable. Also, the deployment of Seamec Agastya this fiscal will aid the overall fleet life. 
+
+# Exposure to client and segmental concentration risk 
+
+MSV services are provided to offshore oilfields in India, for which E&P rights are majorly owned by ONGC. This exposes Seamec to client concentration risk. However, the company does benefit from having a strong client in terms of receiving timely payments. Furthermore, the company has also started deploying vessels to overseas clients which would help mitigate the risk. However, since revenue is entirely dependent on offshore E&P activities, the company remains exposed to segmental concentration risk. 
+
+# Susceptibility of charter rates to inherent volatility in crude oil prices 
+
+Profitability and cash flow in the offshore business depend on charter rates, which are influenced by offshore and deepwater expenditure by oil and gas majors. Offshore and deep-water block investments, which are larger than those in onshore blocks, are highly sensitive to crude oil prices. In the past, slowdown in global oil and gas E&P capex had led to decline in demand for offshore equipment, resulting in a sharp fall in charter rates for offshore vessels and rigs. 
+
+However, charter rates of vessels deployed by Seamec have been stable in the past, despite fluctuations in crude oil prices, given continuous production activities taken up by domestic E&P players. 
+
+# <u>Liquidity Strong</u> 
+
+Seamec maintained cash and cash equivalent of Rs 445 crore as on Sep 30, 2025. The company is expected to generate cash accrual of Rs 200-300 crore over fiscals 2026 to 2029. The annual accrual would be sufficient to meet its near-term annual debt obligation of Rs 140 crore for fiscals 2027 to 2028. The company has not utilised any bank limit for the 12 months ended December 31, 2025 which will act as buffer for exigencies. 
+
+# **<u>Rating sensitivity factors</u>** 
+
+# **Upward factors** 
+
+Sustained improvement in operating performance with improved average fleet life, resulting in RoCE above 12-15% Higher-than-expected utilisation of vessels, further strengthening cash accrual leading to deleveraging and improvement of debt protection metrics 
+
+Improvement in the credit risk profile of its parent, HAL 
+
+# **Downward factors** 
+
+Sustained delay in deploying vessels or fall in MSV charter rates, impacting operating margins to below 25% Larger-than-expected capex, thereby weakening the debt protection metrics or liquidity Deterioration in the credit risk profile of HAL, or change in its strategic importance to the parent 
+
+# **<u>About the Company</u>** 
+
+Seamec (a part of the MM Agarwal group) was incorporated in 1986. It operates in two distinct verticals of the shipping business - offshore support vessels and services and bulk carrier charter business. The company owns eight vessels including one barge in the offshore support business wherein the vessels are deployed in the domestic and international markets. Through its international subsidiary–Seamec International FZE and its joint venture–Seamate Shipping FZC, the company has also diversified its presence in the bulk carrier charter business wherein it owns two dry bulk carriers. 
+
+# **<u>About the Parent</u>** 
+
+Incorporated in 1996, as part of the MM Agarwal group, HAL is an end-to-end solutions provider of underwater and EPC services to the Indian oil and gas industry. Over the years, it has developed a diversified portfolio which includes turnkey projects involving sub-sea and marine services and EPC contracts. Services offered by HAL are certified by independent agencies such as the American Bureau of Shipping (ABS), Det Norske Veritas (DNV) and Lloyd’s Register (LR) as per requirements of the client. 
+
+HAL currently holds a 72.72% stake in Seamec, with the balance held by the public. 
+
+|**Key Financial Indicators**<br> **(Crisil Ratings-adjusted)**||||
+|---|---|---|---|
+|**Particulars(As on / for theperiod ended March 31)**|**Unit**|**2025**|**2024**|
+|**Revenue from operations**|**Rs crore**|**652**|**729**|
+|**Profit after tax(PAT)**|**Rs crore**|**88**|**121**|
+|**PAT margin**|**%**|**13.5**|**16.5**|
+|**Adjusted debt / adjusted networth**|**Times**|**0.21**|**0.34**|
+|**Interest coverage**|**Times**|**15.8**|**15.4**|
+
+
+
+# **<u>Any other information:</u>** Not applicable 
+
+# **Note on complexity levels of the rated instrument:** 
+
+Crisil Ratings` complexity levels are assigned to various types of financial instruments and are included (where applicable) in the 'Annexure - Details of Instrument' in this Rating Rationale. 
+
+Crisil Ratings will disclose complexity level for all securities - including those that are yet to be placed - based on available information. The complexity level for instruments may be updated, where required, in the rating rationale published subsequent to the issuance of the instrument when details on such features are available. 
+
+For more details on the Crisil Ratings` complexity levels please visit www.crisilratings.com. Users may also call the Customer Service Helpdesk with queries on specific instruments. 
+
+# **<u>Annexure - Details of Instrument(s)</u>** 
+
+|**ISIN**|**Name Of**<br>**Instrument**|**Date Of**<br>**Allotment**|**Coupon**<br>**Rate (%)**|**Maturity**<br>**Date**|**Issue Size**<br>**(Rs. Crore)**|**Complexity**<br>**Levels**|**Rating**<br>**Outstanding with**<br>**Outlook**|
+|---|---|---|---|---|---|---|---|
+|NA|Bank<br>Guarantee<sup>&</sup>|NA|NA|NA|75.00|NA|Crisil A+/Watch<br>Developing|
+|NA|Fund-Based<br>Facilities|NA|NA|NA|9.00|NA|Crisil A+/Watch<br>Developing|
+
+
+
+|NA|Non-Fund<br>Based Limit<sup>^</sup>|NA|NA|NA|46.00|NA|Crisil A1/Watch<br>Developing|
+|---|---|---|---|---|---|---|---|
+|NA|Term Loan|NA|NA|31-Dec-<br>28|45.00|NA|Crisil A+/Watch<br>Developing|
+|NA|Term Loan|NA|NA|31-Dec-<br>28|58.00|NA|Crisil A+/Watch<br>Developing|
+|NA|Term Loan|NA|NA|30-Jun-28|150.00|NA|Crisil A+/Watch<br>Developing|
+|NA|Term Loan|NA|NA|14-Aug-<br>33|150.00|NA|Crisil A+/Watch<br>Developing|
+
+
+
+_& - Interchangeable with letter of credit (LC) limit of Rs 10 crore, cash credit (CC) limit of Rs 1 crore and working capital demand loan (WCDL) of Rs 1 crore ^ - Interchangeable with letter of credit (LC) limit of Rs 9 crore, cash credit (CC) limit of Rs 8 crore and working capital demand loan (WCDL) of Rs 1 crore_ 
+
+# **<u>Annexure – List of entities consolidated</u>** 
+
+|**Names of Entities Consolidated**|**Extent of Consolidation**|**Rationale for Consolidation**|
+|---|---|---|
+|Seamec International FZE|Full|Strong operational managerial and<br>financial linkages|
+|Seamate Shipping FZC|Full|Strong operational managerial and<br>financial linkages|
+|Aarey Organic Industries Private Limited|Full|Strong operational managerial and<br>financial linkages|
+|Seamec UK Investments Limited|Full|Strong operational managerial and<br>financial linkages|
+|Fountain House 74 Limited|Full|Strong operational managerial and<br>financial linkages|
+|Fountain House 84 Limited|Full|Strong operational managerial and<br>financial linkages|
+|Fountain House Combined Limited|Full|Strong operational managerial and<br>financial linkages|
+|Seamec Nirman Infra Limited|Full|Strong operational managerial and<br>financial linkages|
+|Searate India IFSC Private Limited|Full|Strong operational managerial and<br>financial linkages|
+
+
+
+# **Annexure - Rating History for last 3 Years** 
+
+|||**Current**||**2026 (**|**History)**|**2**|**025**|**20**|**24**|**20**|**23**|**Start of**<br>**2023**|
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+|||**Outstanding**|||||||||||
+|**Instrument**|**Type**|**Amount**|**Rating**|**Date**|**Rating**|**Date**|**Rating**|**Date**|**Rating**|**Date**|**Rating**|**Rating**|
+|**Fund Based**<br>**Facilities**|LT|412.0|Crisil<br>A+/Watch<br>Developing|16-01-26|Crisil<br>A+/Watch<br>Developing|31-12-25|Crisil<br>A+/Watch<br>Developing|03-05-24|Crisil<br>A+/Stable|05-07-23|Crisil<br>A/Positive|Crisil<br>A/Stable|
+||||--||--|06-10-25|Crisil<br>A+/Watch<br>Developing||--||--|--|
+||||--||--|08-07-25|Crisil<br>A+/Watch<br>Developing||--||--|--|
+|**Non-Fund**<br>**Based**<br>**Facilities**|LT/ST|121.0|Crisil<br>A1/Watch<br>Developing<br>/ Crisil<br>A+/Watch<br>Developing|16-01-26|Crisil<br>A1/Watch<br>Developing<br>/ Crisil<br>A+/Watch<br>Developing|31-12-25|Crisil<br>A+/Watch<br>Developing|03-05-24|Crisil<br>A+/Stable|05-07-23|Crisil<br>A/Positive|Crisil<br>A/Stable|
+||||--||--|06-10-25|Crisil<br>A+/Watch<br>Developing||--||--|--|
+||||--||--|08-07-25|Crisil<br>A+/Watch<br>Developing||--||--|--|
+
+
+
+_All amounts are in Rs.Cr._ 
+
+# **Annexure - Details of Bank Lenders & Facilities** 
+
+|**Facility**|**Amount (Rs.Crore)**|**Name of Lender**|**Rating**|
+|---|---|---|---|
+|**Bank Guarantee**<sup>**&**</sup>|**75**|**HDFC Bank Limited**|**Crisil A+/Watch**<br>**Developing**|
+
+
+
+|**Fund-Based Facilities**|**9**|**IDBI Bank Limited**|**Crisil A+/Watch**<br>**Developing**|
+|---|---|---|---|
+|**Non-Fund Based Limit**<sup>**^**</sup>|**46**|**IDBI Bank Limited**|**Crisil A1/Watch**<br>**Developing**|
+|**Term Loan**|**45**|**Axis Bank Limited**|**Crisil A+/Watch**<br>**Developing**|
+|**Term Loan**|**58**|**HDFC Bank Limited**|**Crisil A+/Watch**<br>**Developing**|
+|**Term Loan**|**150**|**HDFC Bank Limited**|**Crisil A+/Watch**<br>**Developing**|
+|**Term Loan**|**150**|**HDFC Bank Limited**|**Crisil A+/Watch**<br>**Developing**|
+
+
+
+- _& - Interchangeable with letter of credit (LC) limit of Rs 10 crore, cash credit (CC) limit of Rs 1 crore and working capital demand loan (WCDL) of Rs 1 crore_ 
+
+_^ - Interchangeable with letter of credit (LC) limit of Rs 9 crore, cash credit (CC) limit of Rs 8 crore and working capital demand loan (WCDL) of Rs 1 crore_ 
+
+# **Criteria Details** 
+
+**Links to related criteria** **<u>Basics of Ratings (including default recognition, assessing information adequacy)</u>** 
+
+**<u>Criteria for consolidation Criteria for factoring parent, group and government linkages</u>** 
+
+**<u>Criteria for manufacturing, trading and corporate services sector (including approach for financial ratios)</u>** 
+
+**Media Relations Analytical Contacts Customer Service Helpdesk** Anuj Sethi Timings: 10.00 am to 7.00 pm Senior Director Toll Free Number: 1800 267 3850 **Crisil Ratings Limited** D:+91 44 6656 3108 For a copy of Rationales / Rating Reports: <u>anuj.sethi@crisil.com CRISILratingdesk@crisil.com</u> 
+
+**Ramkumar Uppara** Media Relations **Crisil Limited** M: +91 98201 77907 B: +91 22 6137 3000 <u>ramkumar.uppara@crisil.com</u> 
+
+Aditya Jhaver Director **Crisil Ratings Limited** D:+91 22 6137 3329 <u>aditya.jhaver@crisil.com</u> Sagarikaa Mukherjee Senior Rating Analyst **Crisil Ratings Limited** B:+91 22 6137 3000 <u>sagarikaa.mukherjee@crisil.com</u> 
+
+**Kartik Behl** Media Relations **Crisil Limited** M: +91 90043 33899 B: +91 22 6137 3000 **<u>kartik.behl@crisil.com</u>** 
+
+**Divya Pillai** Media Relations **Crisil Limited** M: +91 86573 53090 B: +91 22 6137 3000 **<u>divya.pillai1@ext-crisil.com</u>** 
+
+**For Analytical queries** Toll Free Number: 1800 266 6550 <u>ratingsinvestordesk@crisil.com</u> 
+
+## Note for Media: 
+
+This rating rationale is transmitted to you for the sole purpose of dissemination through your newspaper/magazine/agency. The rating rationale may be used by you in full or in part without changing the meaning or context thereof but with due credit to Crisil Ratings. However, Crisil Ratings alone has the sole right of distribution (whether directly or indirectly) of its rationales for consideration or otherwise through any media including websites and portals. 
+
+# **About Crisil Ratings Limited (A subsidiary of Crisil Limited, an S&P Global Company)** 
+
+Crisil Ratings pioneered the concept of credit rating in India in 1987. With a tradition of independence, analytical rigour and innovation, we set the standards in the credit rating business. We rate the entire range of debt instruments, such as bank loans, certificates of deposit, commercial paper, non-convertible/convertible/partially convertible bonds and debentures, perpetual bonds, bank hybrid capital instruments, asset-backed and mortgage-backed securities, partial guarantees and other structured debt instruments. We have rated over 33,000 large and mid-scale corporates and financial institutions. We have also instituted several innovations in India in the rating business, including ratings for municipal bonds, partially guaranteed instruments and infrastructure investment trusts (InvITs). 
+
+Crisil Ratings Limited ('Crisil Ratings') is a wholly-owned subsidiary of Crisil Limited ('Crisil'). Crisil Ratings Limited is registered in India as a credit rating agency with the Securities and Exchange Board of India ("SEBI"). 
+
+For more information, visit www.crisilratings.com 
+
+# **About Crisil Limited** 
+
+Crisil is a leading, agile and innovative global analytics company driven by its mission of making markets function better. 
+
+It is India’s foremost provider of ratings, data, research, analytics and solutions with a strong track record of growth, culture of innovation, and global footprint. 
+
+It has delivered independent opinions, actionable insights, and efficient solutions to over 100,000 customers through businesses that operate from India, the US, the UK, Argentina, Poland, China, Hong Kong and Singapore. 
+
+It is majority owned by S&P Global Inc, a leading provider of transparent and independent ratings, benchmarks, analytics and data to the capital and commodity markets worldwide. 
+
+For more information, visit <u>www.crisil.com</u> 
+
+Connect with us: <u>TWITTER</u> | LINKEDIN | <u>YOUTUBE</u> | FACEBOOK 
+
+## **CRISIL PRIVACY NOTICE** 
+
+**Crisil respects your privacy. We may use your contact information, such as your name, address and email id to fulfil your request and service your account and to provide you with additional information from Crisil. For further information on Crisil's privacy policy please visit www.crisil.com.** 
+
+# **DISCLAIMER** 
+
+This disclaimer is part of and applies to each credit rating report and/or credit rating rationale ('report') provided by Crisil Ratings Limited ('Crisil Ratings'). For the avoidance of doubt, the term 'report' includes the information, ratings and other content forming part of the report. The report is intended for use only within the jurisdiction of India. This report does not constitute an offer of services. Without limiting the generality of the foregoing, nothing in the report is to be construed as Crisil Ratings provision or intention to provide any services in jurisdictions where Crisil Ratings does not have the necessary licenses and/or registration to carry out its business activities. Access or use of this report does not create a client relationship between Crisil Ratings and the user. 
+
+The report is a statement of opinion as on the date it is expressed, and it is not intended to and does not constitute investment advice within meaning of any laws or regulations (including US laws and regulations). The report is not an offer to sell or an offer to purchase or subscribe to any investment in any securities, instruments, facilities or solicitation of any kind to enter into any deal or transaction with the entity to which the report pertains. The recipients of the report should rely on their own judgment and take their own professional advice before acting on the report in any way. 
+
+Crisil Ratings and its associates do not act as a fiduciary. The report is based on the information believed to be reliable as of the date it is published, Crisil Ratings does not perform an audit or undertake due diligence or independent verification of any information it receives and/or relies on for preparation of the report. THE REPORT IS PROVIDED ON “AS IS” BASIS. TO THE 
+
+MAXIMUM EXTENT PERMITTED BY APPLICABLE LAWS, CRISIL RATINGS DISCLAIMS WARRANTY OF ANY KIND, EXPRESS, IMPLIED OR OTHER WARRANTIES OR CONDITIONS, INCLUDING WARRANTIES OF MERCHANTABILITY, ACCURACY, COMPLETENESS, ERROR-FREE, NON-INFRINGEMENT, NON-INTERRUPTION, SATISFACTORY QUALITY, FITNESS FOR A PARTICULAR PURPOSE OR INTENDED USAGE. In no event shall Crisil Ratings, its associates, third-party providers, as well as their directors, officers, shareholders, employees or agents be liable to any party for any direct, indirect, incidental, exemplary, compensatory, punitive, special or consequential damages, costs, expenses, legal fees or losses (including, without limitation, lost income or lost profits and opportunity costs) in connection with any use of any part of the report even if advised of the possibility of such damages. 
+
+The report is confidential information of Crisil Ratings and Crisil Ratings reserves all rights, titles and interest in the rating report. The report shall not be altered, disseminated, distributed, redistributed, licensed, sub-licensed, sold, assigned or published any content thereof or offer access to any third party without prior written consent of Crisil Ratings. 
+
+Crisil Ratings or its associates may have other commercial transactions with the entity to which the report pertains or its associates. Ratings are subject to revision or withdrawal at any time by Crisil Ratings. Crisil Ratings may receive compensation for its ratings and certain credit-related analyses, normally from issuers or underwriters of the instruments, facilities, securities or from obligors. 
+
+Crisil Ratings has in place a ratings code of conduct and policies for managing conflict of interest. For more detail, please refer to: <u>https://www.crisilratings.com/en/home/our-businesses/ratings/regulatory-disclosures/highlighted-policies.html. Public ratings</u> and analysis by Crisil Ratings, as are required to be disclosed under the Securities and Exchange Board of India regulations (and other applicable regulations, if any), are made available on its websites, <u>www.crisilratings.com</u> and <u>https://www.ratingsanalytica.com</u> (free of charge). Crisil Ratings shall not have the obligation to update the information in the Crisil Ratings report following its publication although Crisil Ratings may disseminate its opinion and/or analysis. Reports with more detail and additional information may be available for subscription at a fee.  Rating criteria by Crisil Ratings are available on the Crisil Ratings website, www.crisilratings.com. For the latest rating information on any company rated by Crisil Ratings, you may contact the Crisil Ratings desk at crisilratingdesk@crisil.com, or at (0091) 1800 267 3850. 
+
+Crisil Ratings shall have no liability, whatsoever, with respect to any copies, modifications, derivative works, compilations or extractions of any part of this [report/ work products], by any person, including by use of any generative artificial intelligence or other artificial intelligence and machine learning models, algorithms, software, or other tools. Crisil Ratings takes no responsibility for such unauthorized copies, modifications, derivative works, compilations or extractions of its [report/ work products] and shall not be held liable for any errors, omissions of inaccuracies in such copies, modifications, derivative works, compilations or extractions. Such acts will also be in breach of Crisil Ratings’ intellectual property rights or contrary to the laws of India and Crisil Ratings shall have the right to take appropriate actions, including legal actions against any such breach. 
+
+Crisil Ratings uses the prefix 'PP-MLD' for the ratings of principal-protected market-linked debentures (PPMLD) with effect from November 1, 2011, to comply with the SEBI circular, "Guidelines for Issue and Listing of Structured Products/Market Linked Debentures". The revision in rating symbols for PPMLDs should not be construed as a change in the rating of the subject instrument. For details on Crisil Ratings' use of 'PP-MLD' please refer to the notes to Rating scale for Debt Instruments and Structured Finance Instruments at the following link: **<u>htps://www.crisilratngs.com/en/home/our-business/ratngs/credit-ratngsscale.html</u>** 
+

@@ -71,8 +71,8 @@ STOPWORDS = {"of", "and", "the", "&"}
 # relative to ROOT. ICRA lives at the root; CRISIL/CareEdge in their own folders.
 # "scale" = rating-symbol style, "tag" = token used in deliverable filenames.
 AGENCIES = {
-    "ICRA":     {"methodology": "Methodology",
-                 "reports": "Report for Reference",
+    "ICRA":     {"methodology": "ICRA/Methodology",
+                 "reports": "ICRA/Report for Reference",
                  "kb": "Knowledge Base",
                  "scale": "[ICRA]AAA ... [ICRA]D / [ICRA]A1+ ... A4, D",
                  "tag": ""},
@@ -2394,4 +2394,6 @@ if __name__ == "__main__":
             _rate_engine().provision()
         except Exception as _e:                                           # noqa: BLE001
             print("[startup] provision skipped: %s" % _e)
-    app.run(host="127.0.0.1", port=5050, debug=dev, use_reloader=dev, threaded=True)
+    # Bind 127.0.0.1 by default (localhost-only); RATING_HOST=0.0.0.0 to serve from a container.
+    host = os.environ.get("RATING_HOST", "127.0.0.1")
+    app.run(host=host, port=5050, debug=dev, use_reloader=dev, threaded=True)

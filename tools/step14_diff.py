@@ -56,7 +56,7 @@ def tokens(name: str):
             if w not in STOP and len(w) > 2}
 
 
-AGENCY_LIB = {"ICRA": "Report for Reference",
+AGENCY_LIB = {"ICRA": "ICRA/Report for Reference",
               "CRISIL": "CRISIL/Report for Reference",
               "CareEdge": "CareEdge/Report for Reference"}
 

@@ -53,6 +53,7 @@ WEBAPP = ["app.py", "README.md", "requirements.txt", "Rating Agent.bat"]
 
 # --- everything that must NOT ship, with why (used by --list and by the audit) ------------------
 WITHHELD = {
+    "ICRA": "third-party agency publications and methodology papers",
     "CRISIL": "third-party agency publications and methodology papers",
     "CareEdge": "third-party agency publications and methodology papers",
     "Report for Reference": "third-party agency published rating rationales",

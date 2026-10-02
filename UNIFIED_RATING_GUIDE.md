@@ -83,7 +83,7 @@
 
 | Agency | What its own methodology actually says | Where |
 |---|---|---|
-| **ICRA** | Two **fixed anchors only** — AAA/AA→A1+ always, B/C→A4 always. The middle band maps to either of two adjacent ST grades, chosen by the entity's own liquidity assessment. | `ICRA_CONVENTIONS.md` §8 |
+| **ICRA** | Two **fixed anchors only** — AAA/AA→A1+ always, B/C→A4 always. The middle band maps to either of two adjacent ST grades, chosen by the entity's own liquidity assessment. | `ICRA/ICRA_CONVENTIONS.md` §8 |
 | **CRISIL** | A **full table** (`basics-of-ratings` Table 1) that **varies by entity type at the same LT grade** — at A−, a *corporate* maps to (A1)/A2+ while a *bank* maps to A1+/(A1), a full notch better. Look up by **entity type**, not just agency. | `CRISIL/CRISIL_CONVENTIONS.md` §6 |
 | **CareEdge** | Its own mapping table is **corrupted in the reference library** — structure survived PDF conversion, every data cell is blank (failure mode 49). **Do not reconstruct it from ICRA's or CRISIL's shape.** Verify any CareEdge LT-ST pair against that issuer's own published action (Step 14) and flag the file for re-extraction. | `Rating_of_Short_Term_Instruments_Feb_2025.md` |
 
@@ -156,8 +156,8 @@ Document Read Log in the workpaper: one row per file — what it is / key facts 
 
 | Entity class | ICRA | CRISIL | CareEdge |
 |---|---|---|---|
-| **Corporate** | `ICRA_CONVENTIONS.md` | `CRISIL/CRISIL_CONVENTIONS.md` | `CareEdge/CORPORATE_CONVENTIONS.md` |
-| **Bank / NBFC / HFC** | `ICRA_BANKS_NBFC_CONVENTIONS.md` | `CRISIL/CRISIL_BANKS_NBFC_CONVENTIONS.md` | — |
+| **Corporate** | `ICRA/ICRA_CONVENTIONS.md` | `CRISIL/CRISIL_CONVENTIONS.md` | `CareEdge/CORPORATE_CONVENTIONS.md` |
+| **Bank / NBFC / HFC** | `ICRA/ICRA_BANKS_NBFC_CONVENTIONS.md` | `CRISIL/CRISIL_BANKS_NBFC_CONVENTIONS.md` | — |
 | **Broking / securities** | — | `CRISIL/CRISIL_BANKS_NBFC_CONVENTIONS.md` §3 | `CareEdge/BROKING_CONVENTIONS.md` |
 | **Infrastructure / project SPV** | — | **`CRISIL/CRISIL_INFRASTRUCTURE_CONVENTIONS.md`** | — |
 | **Structured finance (ABS/RMBS/CDO)** | — | **`CRISIL/CRISIL_SECURITISATION_CONVENTIONS.md`** | — |
@@ -280,7 +280,7 @@ The sheet then **derives** the divergence (`Scorecard!C41`) and raises the **GAT
 python tools/annotate_scorecard.py <case-slug>
 ```
 
-- **Scope** — clears the other two agencies from `Ref_Scales`, README and the band sheets, and writes only the rating agency's own operating-profit convention onto the Rating sheet (**corrected 13-Sep-2026 — this bracket previously said "ICRA OPBDIT strips other income unconditionally", which is false and had gone unchallenged since the file was written.** ICRA's own Corporate Credit Rating Methodology (July 2025) states in its footnote that operating profit *"includes other income which are considered core to its operations like the income from jobwork, scale of scrap, duty drawback etc."* So: **ICRA OPBDITA** and **CareEdge PBILDT** both retain core-related other income and both exclude interest/dividend/rental; **CRISIL PBDIT** is the widest, retaining all recurring non-operating income including interest and dividends. Sources: `ICRA_CONVENTIONS.md` §1 · `CRISIL/CRISIL_CONVENTIONS.md` §1 · `CareEdge/CORPORATE_CONVENTIONS.md` §2-3. Any ICRA case where a core-related other-income item was excluded on the strength of the old wording should be re-checked). **They are not interchangeable — offering three lets the reader apply the wrong one (R32).**
+- **Scope** — clears the other two agencies from `Ref_Scales`, README and the band sheets, and writes only the rating agency's own operating-profit convention onto the Rating sheet (**corrected 13-Sep-2026 — this bracket previously said "ICRA OPBDIT strips other income unconditionally", which is false and had gone unchallenged since the file was written.** ICRA's own Corporate Credit Rating Methodology (July 2025) states in its footnote that operating profit *"includes other income which are considered core to its operations like the income from jobwork, scale of scrap, duty drawback etc."* So: **ICRA OPBDITA** and **CareEdge PBILDT** both retain core-related other income and both exclude interest/dividend/rental; **CRISIL PBDIT** is the widest, retaining all recurring non-operating income including interest and dividends. Sources: `ICRA/ICRA_CONVENTIONS.md` §1 · `CRISIL/CRISIL_CONVENTIONS.md` §1 · `CareEdge/CORPORATE_CONVENTIONS.md` §2-3. Any ICRA case where a core-related other-income item was excluded on the strength of the old wording should be re-checked). **They are not interchangeable — offering three lets the reader apply the wrong one (R32).**
 - **Verify** — reads Stage 3 (below) and prints `MATCHES` or `*** MISMATCH ***` against this case's own rationale.
 - **Recalculate** — `recalc_workbook.py`, so every computed cell is readable outside Excel.
 

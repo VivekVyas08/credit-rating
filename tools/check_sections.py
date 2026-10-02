@@ -1328,7 +1328,7 @@ def _prior_rating_absence_contradicted(t: str, rationale_name: str):
     if not tokens:
         return None
     hits = []
-    for lib in (ROOT / "Report for Reference", ROOT / "CRISIL" / "Report for Reference",
+    for lib in (ROOT / "ICRA" / "Report for Reference", ROOT / "CRISIL" / "Report for Reference",
                 ROOT / "CareEdge" / "Report for Reference"):
         if not lib.is_dir():
             continue
@@ -1463,7 +1463,7 @@ def find_agency_publications(case_dir, rationale_name=""):
 
     tokens = _issuer_tokens(rationale_name)
     if tokens:
-        for lib in (ROOT / "Report for Reference", ROOT / "CRISIL" / "Report for Reference",
+        for lib in (ROOT / "ICRA" / "Report for Reference", ROOT / "CRISIL" / "Report for Reference",
                     ROOT / "CareEdge" / "Report for Reference"):
             if not lib.is_dir():
                 continue

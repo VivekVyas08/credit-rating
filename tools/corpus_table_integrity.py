@@ -27,7 +27,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 AGENCY_METHODOLOGY_DIRS = [
-    ROOT / "Methodology",
+    ROOT / "ICRA" / "Methodology",
     ROOT / "CRISIL" / "Methodology",
     ROOT / "CareEdge" / "Methodology",
 ]

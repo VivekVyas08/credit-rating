@@ -1,9 +1,9 @@
-# This repository tracks the TOOL'S CODE ONLY.
+# This (PRIVATE) repository tracks the tool's CODE plus the methodology + reference-report
+# MARKDOWN corpus for all three agencies (added 2026-10-02 so a clone has the full library).
 #
-# Deliberately NOT version-controlled: the reference corpus (the agencies' own
-# copyrighted published rationales), the knowledge base, case data under Companies/,
-# generated workbooks/PDFs, and caches. The project folder is zipped and emailed with
-# deliverables, so confidential and third-party material must stay out of git history.
+# Still NOT version-controlled: case data under Companies/, the Knowledge Base/, generated
+# workbooks, ALL PDFs, the 5+ GB model under models/, and caches. For a PUBLIC/open-source
+# export that also strips the third-party corpus, use tools/make_public.py.
 #
 # Strategy: ignore everything at the root, then re-include only the code paths. This is
 # a whitelist on purpose - a new top-level data folder is excluded by default, never
@@ -22,17 +22,26 @@
 # --- authored knowledge: conventions files + Docs (added on request) ---
 # Only the project's OWN authored documents are re-included; the agencies' copyrighted
 # corpus and corpus dumps/scratch stay out.
-!/ICRA_CONVENTIONS.md
-!/ICRA_BANKS_NBFC_CONVENTIONS.md
-
-# CRISIL/ and CareEdge/ are data folders: re-include ONLY their top-level authored .md
-# (conventions, README, audit notes) - never their Methodology/Report/KB subfolders.
+# --- the three agency folders, symmetric since ICRA moved out of the root into ICRA/ on
+#     2026-10-02. Re-include each agency's authored top-level .md (conventions, README) AND its
+#     Methodology/ + Report for Reference/ MARKDOWN corpus (user decision 2026-10-02 - this is a
+#     PRIVATE repo; the corpus is .md only, and *.pdf is excluded globally below). The Knowledge
+#     Base/ and case data under Companies/ are still NOT tracked.
+!/ICRA/
+/ICRA/*
+!/ICRA/*.md
+!/ICRA/Methodology/
+!/ICRA/Report for Reference/
 !/CRISIL/
 /CRISIL/*
 !/CRISIL/*.md
+!/CRISIL/Methodology/
+!/CRISIL/Report for Reference/
 !/CareEdge/
 /CareEdge/*
 !/CareEdge/*.md
+!/CareEdge/Methodology/
+!/CareEdge/Report for Reference/
 
 # Docs/ is mostly authored analysis, but holds a corpus dump, concatenated corpus
 # chunks and scratch that must stay out.
@@ -47,5 +56,6 @@ __pycache__/
 *.pyc
 *.pyo
 *.log
+*.pdf
 /webapp/ui_prefs.json
 /.claude/settings.local.json

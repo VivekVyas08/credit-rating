@@ -35,7 +35,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent  # this script now lives in tools/,
 # one level below the project root - moved here 01-Sep-2026 to declutter the root.
-AGENCY_DIRS = {"ICRA": ROOT / "Report for Reference",
+AGENCY_DIRS = {"ICRA": ROOT / "ICRA/Report for Reference",
                "CRISIL": ROOT / "CRISIL/Report for Reference",
                "CareEdge": ROOT / "CareEdge/Report for Reference"}
 

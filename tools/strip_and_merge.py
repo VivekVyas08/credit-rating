@@ -77,7 +77,7 @@ def merge(src_dir, out_dir, chunk_files, prefix):
 if __name__ == "__main__":
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     out = os.path.join(root, "Docs", "corpus_review", "merged")
-    n1, c1, b1, a1 = merge(os.path.join(root, "Methodology"), out, 10, "ICRA")
+    n1, c1, b1, a1 = merge(os.path.join(root, "ICRA", "Methodology"), out, 10, "ICRA")
     n2, c2, b2, a2 = merge(os.path.join(root, "CRISIL", "Methodology"), out, 10, "CRISIL")
     print(f"ICRA:   {n1} files -> {c1} chunks, {b1} -> {a1} bytes ({100*a1/b1:.0f}% kept)")
     print(f"CRISIL: {n2} files -> {c2} chunks, {b2} -> {a2} bytes ({100*a2/b2:.0f}% kept)")
