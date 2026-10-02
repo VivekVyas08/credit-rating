@@ -1,0 +1,16 @@
+{
+  "name": "Godrej Properties",
+  "agency": "ICRA",
+  "sector": "Real Estate",
+  "entity_type": "corporate",
+  "created": "2026-09-02T19:32:22",
+  "aliases": [
+    "GP"
+  ],
+  "methodologies": [
+    "933~Real Estate, Rating Methodology, Nov 2024.md",
+    "960~Corporate Credit Rating Methodology, Jul 2025.md"
+  ],
+  "isins": [],
+  "step12_scaling_decision": "Corporate real-estate developer under project-completion accounting - a generic 5-yr 3-statement template would model revenue recognition timing (project completion dates) that this engine cannot forecast reliably from public disclosures alone. Built instead: a code-based forward view (forward_model.py) deriving the debt path from the funding gap (capex/land spend + repayment - OCF), driven by the two variables that actually decide this rating per the Real Estate methodology - Booking Value growth and collections - base + stress case, cross-checked against ICRA own stated FY2027 debt guidance (Rs 18,500-19,000 cr) in its 21-Jul-2026 rationale. Plus the Step 12b scorecard filled from audited actuals. This mirrors the Vodafone Idea precedent (01-Sep-2026) for a business where the funding-gap arithmetic is the credit story, not a full P&L/BS/CF projection."
+}

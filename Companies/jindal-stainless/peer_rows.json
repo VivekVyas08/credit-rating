@@ -1,0 +1,16 @@
+{
+  "agency": "CareEdge",
+  "sector": "corporate - manufacturing (master criteria); scorecard sector iron & steel / metals / mining",
+  "peer": "Jayaswal Neco Industries Limited_24 Jan 2024.md",
+  "required_rows": [
+    "Total operatingincome",
+    "PBILDT",
+    "PAT",
+    "Overallgearing (includingacceptances) (times)",
+    "Interest coverage(times)",
+    "Adjusted Interest coverage(times)^"
+  ],
+  "peers_sampled": 20,
+  "peers_with_long_term_rating": 12,
+  "peers_with_short_term_rating": 11
+}

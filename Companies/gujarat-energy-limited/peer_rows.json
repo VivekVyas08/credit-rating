@@ -1,0 +1,12 @@
+{
+  "agency": "CareEdge",
+  "sector": "city gas distribution / integrated energy (post-scheme); state-owned",
+  "peer": "Gujarat Gas Limited_29 Sep 2025.md",
+  "required_rows": [
+    "Total operating income",
+    "PBILDT",
+    "PAT",
+    "Overall gearing (times)",
+    "Interest coverage (times)"
+  ]
+}

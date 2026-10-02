@@ -1,0 +1,19 @@
+{
+  "name": "Riba Textiles Limited",
+  "agency": "CareEdge",
+  "sector": "Textiles - Cotton / Home Textiles (terry towels)",
+  "entity_type": "corporate",
+  "created": "2026-08-19T20:37:55",
+  "aliases": [
+    "RTL"
+  ],
+  "methodologies": [
+    "Rating Methodology - Cotton Textile Manufacturing - December 2024.md",
+    "Criteria_Rating_Methodology_Manufacturing_Companies_March_2025.md"
+  ],
+  "isins": [],
+  "routing_corrected_note": "intake defaulted to generic manufacturing + services; Riba manufactures terry towels / home textiles, so CareEdge cotton-textile methodology is primary. Services criteria removed - no services business. Corrected 19-Aug-2026.",
+  "rating_delivered": "2026-08-19T20:48:34",
+  "rating_outcome": "CARE BBB; Stable (LT Rs 29.00cr) / CARE BBB; Stable / CARE A3+ (LT-ST Rs 65.00cr). Total Rs 94.00cr. Matches CareEdge published 01-Jul-2026.",
+  "delivery_scope": "Rationale + ratio engine (8/8 tie-outs) + ratio Excel. Updated 19-Aug-2026 with CareEdge published press release of 01-Jul-2026: real rated amounts, FY2026 financials, US-tariff Rating Watch history. Correction note appended. Scorecard and 5-yr model not built."
+}

@@ -1040,7 +1040,7 @@ document.querySelectorAll('form.upform').forEach(f => {
 
 
 def page(title: str, body: str, active: str = ""):
-    run_mode = (_read_pref().get("run_mode") or "online")
+    run_mode = (_read_pref().get("run_mode") or "offline")
     return render_template_string(PAGE, title=title, body=body, active=active, run_mode=run_mode)
 
 
@@ -2186,7 +2186,7 @@ def settings():
             'appear here to select.</p>')
 
     # Online/offline run mode: what a bare `rate_engine.py <slug>` (no --engine) does.
-    run_mode = _read_pref().get("run_mode") or "online"
+    run_mode = _read_pref().get("run_mode") or "offline"
     mode_opts = "".join(
         '<option value="%s"%s>%s</option>' % (v, " selected" if v == run_mode else "", lbl)
         for v, lbl in (("online", "Online &mdash; Claude API (needs a key)"),

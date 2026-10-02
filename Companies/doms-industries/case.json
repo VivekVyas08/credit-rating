@@ -1,0 +1,18 @@
+{
+  "name": "DOMS Industries",
+  "agency": "CRISIL",
+  "sector": "Corporate - Manufacturing & Services (master criteria)",
+  "entity_type": "corporate",
+  "created": "2026-08-12T19:42:59",
+  "aliases": [
+    "DI"
+  ],
+  "methodologies": [
+    "criteria-for-manufacturing-trading-and-corporate-services-sector.md",
+    "basics-of-ratings.md",
+    "criteria-for-consolidation.md"
+  ],
+  "isins": [],
+  "rating_delivered": "2026-08-12 (CRISIL AA-/Stable)",
+  "step12_scaling_decision": "A five-year projection of the credit path WAS built (Companies/doms-industries/forward_model.py), with base and stress cases and the debt path DERIVED from the capex funding gap rather than assumed (failure mode 18). What was NOT run is the equity-research plugin's native 3-statement workbook. Reason: the forward question on this credit is narrow and does not need a full three-statement template to answer. DOMS closed FY2026 with Rs 141.26 crore of debt including leases against Rs 1,219.73 crore of tangible net worth and Rs 254.34 crore of operating cash flow, so the rating does not turn on the balance sheet. It turns on ONE thing: whether the raw-material margin shock visible in Q1 FY2027 - OPBDITA margin 12.08% against 17.37% a year earlier, computed from the company's own filing - is transitory while a Rs 350 crore greenfield year is funded. The model answers exactly that, carrying an eight-check opening-balance tie-out, and its stress case holds the margin near the Q1 level for two full years while spending the capex programme IN FULL - because the plant is committed and cutting capex in a stress case would improve every credit metric and describe a company that had abandoned its strategy. Borrowings and lease liabilities are tracked separately, since a surplus repays borrowings but does not extinguish right-of-use obligations. Recorded 01-Sep-2026."
+}

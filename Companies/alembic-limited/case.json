@@ -1,0 +1,53 @@
+{
+  "name": "Alembic Limited",
+  "agency": "ICRA",
+  "sector": "Corporate (no specific sector methodology)",
+  "entity_type": "corporate",
+  "created": "2026-08-31T21:13:22",
+  "aliases": [
+    "AL"
+  ],
+  "methodologies": [
+    "960~Corporate Credit Rating Methodology, Jul 2025.md",
+    "941~Investment Companies, Rating Methodology, Jan 2025.md"
+  ],
+  "isins": [],
+  "step12_scaling_decision": "Focused sensitivity on the two variables that actually move this credit (market value of the listed investment portfolio; the electricity-duty litigation outcome) plus the real-estate segment, INSTEAD of a full 5-yr 3-statement model. Reason: total debt is Rs 10.64 crore against Rs 3,885.89 crore of quoted investments and a net CASH position of Rs 81.38 crore - no plausible revenue/margin/capex path changes the debt-servicing conclusion, so a 3-statement projection would model variables that cannot bind. What CAN bind is the portfolio's marked-to-market value (down 33% from its FY2024 peak) and an unascertainable litigation interest exposure - neither of which a 3-statement model captures. Also: no quarterly results and no sector-assumptions document were supplied. See Alembic_Limited_Sensitivity_Model_31Aug2026.md. Recorded 31-Aug-2026 per failure mode 35.",
+  "audit": {
+    "ready": true,
+    "checked_at": "2026-09-29T23:00:30",
+    "failing": [],
+    "checks": [
+      {
+        "name": "Tie-outs reconcile",
+        "ok": true,
+        "detail": "204/205 reconcile (1 acknowledged in ACKNOWLEDGED_TIEOUTS: INTERNAL implied tax rate plausible (8-45%), FY2025)"
+      },
+      {
+        "name": "Mutation coverage measured and gaps disclosed",
+        "ok": true,
+        "detail": "100.0% (7 gap(s) named per FM39)"
+      },
+      {
+        "name": "Section/quality gate: Alembic Limited_31 Aug 2026_Rating Rationale.md",
+        "ok": true,
+        "detail": "PASS, but 5 quality WARN item(s) - read them before delivering"
+      },
+      {
+        "name": "Scorecard matches rationale",
+        "ok": true,
+        "detail": "alembic-limited              assigned AA- vs rationale AA- -> MATCHES | anchor AA- (0.0 notch bridge) | scoped to ICRA (10 cleared)"
+      },
+      {
+        "name": "Ratio workpaper delivered",
+        "ok": true,
+        "detail": "Alembic_Limited_Ratio_Workpaper_31Aug2026.md"
+      },
+      {
+        "name": "Step 14 diff vs the agency's own action",
+        "ok": null,
+        "detail": "no same-issuer publication in the reference libraries"
+      }
+    ]
+  }
+}

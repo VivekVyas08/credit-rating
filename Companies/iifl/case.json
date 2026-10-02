@@ -1,0 +1,24 @@
+{
+  "name": "IIFL",
+  "agency": "CareEdge",
+  "sector": "NBFC",
+  "entity_type": "nbfc",
+  "basis": "standalone",
+  "mandate": "all debt (LT + ST)",
+  "created": "2026-07-16T22:57:55",
+  "aliases": [
+    "IIFL Finance Limited",
+    "IIFL Finance"
+  ],
+  "methodologies": [
+    "Criteria_CARE_NBFC_Criteria_February_2025.md",
+    "Criteria_Rating_Methodology_Financial_Ratios_Financial_Sector_February_2025.md",
+    "Rating_of_Short_Term_Instruments_Feb_2025.md",
+    "CARE_Ratings_criteria_for_rating_of_Market_Linked_Debentures_Feb_2025.md",
+    "Consolidation-and-Combined-Approach-March-2025.md",
+    "Notching_by_Factoring_Linkages_with_Parent_Jan_2025.md",
+    "Assigning Outlook or Rating Watch to Credit Ratings.md"
+  ],
+  "isins": [],
+  "notes": "Sector corrected Bank -> NBFC on 16-Jul-2026 after verifying from IIFL Finance's own FY26 AR (NBFC-ML, CIN L67100MH1995PLC093797). Rated on a STANDALONE basis (IIFL Finance only; subsidiaries HFC/Samasta excluded) per user instruction. Bank + bank-hybrid methodologies from intake removed (scope mismatch, failure mode 4)."
+}

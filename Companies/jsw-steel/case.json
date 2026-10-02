@@ -1,0 +1,16 @@
+{
+  "name": "JSW Steel",
+  "sector": "Iron & Steel",
+  "entity_type": "corporate",
+  "created": "2026-07-10T13:17:01",
+  "aliases": [
+    "JS"
+  ],
+  "isins": [],
+  "rating_delivered": "2026-07-13 (CRISIL)",
+  "agency": "CRISIL",
+  "methodologies": [
+    "criteria-for-manufacturing-trading-and-corporate-services-sector.md"
+  ],
+  "research_delivered": "2026-07-13"
+}

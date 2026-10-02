@@ -1,0 +1,22 @@
+{
+  "name": "IndusInd Bank",
+  "agency": "CRISIL",
+  "sector": "Financial Sector - Banks and Financial Institutions",
+  "entity_type": "corporate",
+  "basis": "consolidated",
+  "created": "2026-10-01T20:38:00",
+  "aliases": [
+    "IndusInd Bank Limited",
+    "IndusInd Bank"
+  ],
+  "methodologies": [
+    "basics-of-ratings.md",
+    "criteria-for-banks-and-financial-institutions.md",
+    "criteria-for-consolidation.md",
+    "criteria-for-factoring-parent-group-government-linkages.md"
+  ],
+  "isins": [],
+  "engagement_type": "surveillance",
+  "sector_corrected_note": "scheduled commercial bank (private sector); financial-sector input block, NOT the corporate scorecard",
+  "step12_scaling_decision": "Bank lending model (book growth -> NII -> credit cost -> PAT), not the corporate 3-statement template, per CLAUDE.md FM35; focused on the FY26 earnings reset and FY27 recovery."
+}

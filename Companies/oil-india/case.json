@@ -1,0 +1,18 @@
+{
+  "name": "Oil India",
+  "agency": "CRISIL",
+  "sector": "Corporate - Manufacturing & Services (master criteria)",
+  "entity_type": "corporate",
+  "created": "2026-08-30T19:16:21",
+  "aliases": [
+    "OI"
+  ],
+  "methodologies": [
+    "criteria-for-manufacturing-trading-and-corporate-services-sector.md",
+    "basics-of-ratings.md",
+    "criteria-for-consolidation.md",
+    "criteria-for-factoring-parent-group-government-linkages.md"
+  ],
+  "isins": [],
+  "step12_scaling_decision": "Focused sensitivity model on 2-3 rating-driving variables (crude realisation, NRL capex drawdown/debt build, reserve-replacement trajectory) instead of the full 5-yr 3-statement equity-research-plugin workflow. Reason: (a) existing unqualified CRISIL AAA issuer with no distress history: (b) one identifiable dominant forward driver (NRL refinery expansion) rather than a diffuse multi-variable business; (c) no sector-assumptions document or term sheets were supplied. See Oil_India_Sensitivity_Model_30Aug2026.md. Recorded 30-Aug-2026 per failure mode 35 (Step 12 is never silently skipped)."
+}

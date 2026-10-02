@@ -1,9 +1,14 @@
 # This (PRIVATE) repository tracks the tool's CODE plus the methodology + reference-report
 # MARKDOWN corpus for all three agencies (added 2026-10-02 so a clone has the full library).
 #
-# Still NOT version-controlled: case data under Companies/, the Knowledge Base/, generated
-# workbooks, ALL PDFs, the 5+ GB model under models/, and caches. For a PUBLIC/open-source
-# export that also strips the third-party corpus, use tools/make_public.py.
+# Also tracked since 2026-10-03, so a clone can run a full rating: the shared Knowledge Base/,
+# the case folders under Companies/ (markdown documents, engines, workpapers, rationales,
+# workbooks) and the Rating_Scorecard.xlsx template.
+#
+# Still NOT version-controlled: ALL PDFs (incl. the original filings under Companies/), scratch
+# files prefixed "_" inside a case folder, the 5+ GB model under models/, machine-local prefs and
+# caches. For a PUBLIC/open-source export that strips the third-party corpus and the case data,
+# use tools/make_public.py.
 #
 # Strategy: ignore everything at the root, then re-include only the code paths. This is
 # a whitelist on purpose - a new top-level data folder is excluded by default, never
@@ -26,14 +31,19 @@
 !/Start Credit Rating Tool.bat
 !/Start Credit Rating Tool.command
 
+# what a full rating needs beyond the code: routing/SOP digests, the cases, the scorecard template
+!/Knowledge Base/
+!/Rating_Scorecard.xlsx
+!/Companies/
+/Companies/*/_*
+
 # --- authored knowledge: conventions files + Docs (added on request) ---
 # Only the project's OWN authored documents are re-included; the agencies' copyrighted
 # corpus and corpus dumps/scratch stay out.
 # --- the three agency folders, symmetric since ICRA moved out of the root into ICRA/ on
 #     2026-10-02. Re-include each agency's authored top-level .md (conventions, README) AND its
 #     Methodology/ + Report for Reference/ MARKDOWN corpus (user decision 2026-10-02 - this is a
-#     PRIVATE repo; the corpus is .md only, and *.pdf is excluded globally below). The Knowledge
-#     Base/ and case data under Companies/ are still NOT tracked.
+#     PRIVATE repo; the corpus is .md only, and *.pdf is excluded globally below).
 !/ICRA/
 /ICRA/*
 !/ICRA/*.md

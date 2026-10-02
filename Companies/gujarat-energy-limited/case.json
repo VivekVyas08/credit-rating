@@ -1,0 +1,24 @@
+{
+  "name": "Gujarat Energy Limited",
+  "agency": "CareEdge",
+  "sector": "City Gas Distribution / integrated energy (post-scheme); state-owned",
+  "entity_type": "public",
+  "created": "2026-08-20T13:15:27",
+  "aliases": [
+    "GEL"
+  ],
+  "methodologies": [
+    "Assigning Outlook or Rating Watch to Credit Ratings.md",
+    "Consolidation-and-Combined-Approach-March-2025.md",
+    "Criteria-Methodology-Infrastructure-Sector-Ratings-Mar-2025.md",
+    "Criteria_Rating_Methodology_City_Gas_Distribution_Companies_March_2025.md",
+    "Criteria_Rating_Methodology_Wholesale_Trading_Mar_2025.md",
+    "Rating_of_Short_Term_Instruments_Feb_2025.md"
+  ],
+  "isins": [],
+  "former_name": "Gujarat Gas Limited (GGL) - renamed under the GSPC Group Composite Scheme of Arrangement effective 01-May-2026. CIN L40200GJ2012SGC069118 unchanged.",
+  "routing_note": "sector label was 'State Government' - that is ownership, not a sector. The entity is a city gas distribution company that became an integrated energy conglomerate on 01-May-2026. Methodology list retained: CGD primary, Wholesale Trading for the gas-trading segment, Infrastructure and Consolidation for the scheme. Corrected 20-Aug-2026.",
+  "rating_delivered": "2026-08-20T13:32:16",
+  "rating_outcome": "CARE AAA; Stable / CARE A1+ on Rs 2,900.00 crore fund-based/non-fund-based LT/ST facilities (CareEdge published 29-Sep-2025). Drawn borrowings NIL - entire limit undrawn.",
+  "delivery_scope": "Rationale + ratio engine (11/11 tie-outs) + ratio Excel. Rated amount Rs 2,900 cr added 20-Aug-2026 from the CareEdge reference-library rationale after operator escalation - see CLAUDE.md failure mode 29. Two bases kept separate. Merged-entity debt profile not evidenced."
+}

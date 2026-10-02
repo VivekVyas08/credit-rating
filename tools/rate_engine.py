@@ -695,7 +695,7 @@ def engine_embedded(slug, mod, R, meta, n_tieouts, n_ctx=12288,
         return {"engine": "embedded", "available": False,
                 "reason": "llama-cpp-python is not installed. One-time setup (then NO Ollama "
                           "server is needed):  pip install llama-cpp-python"}
-    gguf = _resolve_gguf(model_hint)
+    gguf = _resolve_gguf(model_hint) or ensure_model(model_hint)
     if not gguf:
         return {"engine": "embedded", "available": False,
                 "reason": "no GGUF weights found. Set CREDITRATING_GGUF to a .gguf file, or keep "
@@ -950,16 +950,20 @@ OLLAMA_DEFAULT_MODEL = _ollama_default_model()
 
 
 def _default_engine():
-    """The web Settings 'run_mode' choice -> the default --engine: offline -> 'embedded'
-    (in-process llama.cpp, no server), else 'both'."""
+    """The web Mode switch -> the default --engine: 'online' -> 'both' (scorecard + Claude API);
+    anything else -> 'embedded' (scorecard + the in-process model, no server, no key).
+
+    OFFLINE IS THE DEFAULT. The switch is stored in webapp/ui_prefs.json, which is machine-local
+    and not in the repo - so on a fresh clone there is no file, and the tool used to fall back to
+    online. It now starts offline everywhere until someone flips the switch on that machine."""
     try:
         rm = json.loads((ROOT / "webapp" / "ui_prefs.json")
                         .read_text(encoding="utf-8")).get("run_mode")
-        if rm == "offline":
-            return "embedded"
+        if rm == "online":
+            return "both"
     except Exception:                                                     # noqa: BLE001
         pass
-    return "both"
+    return "embedded"
 
 
 def ollama_models(url=OLLAMA_DEFAULT_URL, timeout=4):
@@ -1610,7 +1614,7 @@ def main():
     results = {}
     # 'ollama' pairs the offline model view with the offline scorecard, the way 'both' pairs the
     # scorecard with the API model - so an offline run still shows two independent views.
-    if args.engine in ("local", "both", "ollama"):
+    if args.engine in ("local", "both", "ollama", "embedded"):
         results["local"] = engine_local(case_dir)
     if args.engine in ("api", "both"):
         key, how = resolve_key(args)

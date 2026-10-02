@@ -1,0 +1,17 @@
+{
+  "name": "Apollo Tyres Limited",
+  "agency": "CRISIL",
+  "sector": "Corporate - Manufacturing & Services (master criteria)",
+  "entity_type": "corporate",
+  "created": "2026-08-30T19:47:10",
+  "aliases": [
+    "ATL"
+  ],
+  "methodologies": [
+    "criteria-for-manufacturing-trading-and-corporate-services-sector.md",
+    "basics-of-ratings.md",
+    "criteria-for-consolidation.md"
+  ],
+  "isins": [],
+  "step12_scaling_decision": "Focused sensitivity model on 2-3 rating-driving variables (raw-material cost pass-through, European segment margin post-Enschede closure, capex/deleveraging pace) instead of the full 5-yr 3-statement equity-research-plugin workflow. Reason: (a) established AA+-rated issuer with three years of improving financials and no distress history; (b) the single most consequential forward event (Enschede plant closure) is a COMPLETED, disclosed action, not an open multi-variable uncertainty; (c) no sector-assumptions document was supplied. See Apollo_Tyres_Sensitivity_Model_30Aug2026.md. Recorded 30-Aug-2026 per failure mode 35."
+}

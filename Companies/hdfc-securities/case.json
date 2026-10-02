@@ -1,0 +1,44 @@
+{
+  "name": "HDFC Securities",
+  "agency": "CareEdge",
+  "sector": "Broking Company",
+  "entity_type": "financial",
+  "created": "2026-08-20T22:13:00",
+  "aliases": [
+    "HS"
+  ],
+  "methodologies": [
+    "criteria-broking-criteria-december-2025.md",
+    "Criteria_Rating_Methodology_Financial_Ratios_Financial_Sector_February_2025.md",
+    "Assigning Outlook or Rating Watch to Credit Ratings.md",
+    "Notching_by_Factoring_Linkages_with_Parent_Jan_2025.md",
+    "Rating_of_Short_Term_Instruments_Feb_2025.md"
+  ],
+  "isins": [
+    {
+      "isin": "INE700G14009",
+      "name": "Commercial Paper",
+      "amount": "",
+      "uploaded": false
+    },
+    {
+      "isin": "INE700G14011",
+      "name": "Commercial Paper",
+      "amount": "",
+      "uploaded": false
+    },
+    {
+      "isin": "INE700G14086",
+      "name": "Commercial Paper",
+      "amount": "",
+      "uploaded": false
+    }
+  ],
+  "rating_delivered": "2026-08-20T23:59:00",
+  "rating_outcome": "v2. CARE A1+ on commercial paper of Rs 20,000.00 crore (enhanced from Rs 18,000.00 cr) AND CARE AAA; Stable / CARE A1+ on Rs 3,000.00 crore of long-term/short-term bank facilities. Both REAFFIRMED. Outlook: Stable. Matches the CARE Ratings press release of 20-Aug-2026 (operator-supplied). Line integrity verified: CP tranches 13,860.00 + proposed 6,140.00 = 20,000.00; LT/ST 2,250.00 + proposed 750.00 = 3,000.00.",
+  "delivery_scope": "v2 rationale + ratio engine (17/17 reproduce CareEdge's published figures) + ratio Excel (9 TieOut checks, all reproducing). check_sections.py PASS. v1 SUPERSEDED with banner; v1 engines archived as *_v1_superseded.py. Conventions now CareEdge's own and verified by reproduction: TNW = equity - DTA - intangibles (3,496.49 vs published 3,496); overall gearing = (debt + bank guarantees)/TNW (4.64x vs published 4.64x); RONW on AVERAGE TNW (27.54% vs published 27.54%). MTF book is the spine: 5,512 -> 7,133 -> 10,081 cr, 2.76x TNW.",
+  "guidance_note": "check_sections.py gained a BROKING sector-KPI trigger on 20-Aug-2026 (average daily turnover / active clients). Before this the gate had no broking pattern, so a broking rationale could pass with no sector metric at all - failure mode 28. Verified to fire on this report (3 KPI hits) and NOT to fire on Gujarat Energy as a negative control. ALSO added preflight.py probe [0b] OPERATING METRICS ACROSS DOCUMENTS (failure mode 30): prints each operating metric per document newest-first and flags both conflicting values across documents and metrics found only in an older document. Verified to catch all four errors on this case; selftest passes; no regression on other cases. 20-Aug-2026 v2: added CLAUDE.md failure modes 31-34, each with a mechanical check in check_sections.py (rating table states limits not outstandings; no-outlook claim not contradicted; financial-sector net-worth basis stated; broking metric set complete; broking liquidity uses unencumbered cash). All four verified to fire on v1 and pass on v2, with two false positives found and fixed (JSW Steel annotated limit; 'Financial Sector' matching a criteria-document name on corporate reports). Created CareEdge/BROKING_CONVENTIONS.md with the conventions verified to the rupee.",
+  "correction_note": "PRE-DELIVERY SELF-AUDIT caught a year-attribution error in the sector metrics (new failure mode 30). First pass quoted average daily turnover as '+34% off Rs 1.7 Tr' (an FY2025 figure), clients as '1.09 million' (an FY2024 figure), and described the branch network as GROWING 128->134 when the true series is 184->134->128, a 30% CONTRACTION. The inverted trend had propagated into the industry section, which called FY2026 a volume downturn when volumes rose 82% and it was a YIELD downturn. All metrics re-extracted per document and tied to source year; report, ratio engine and workbook score factor all corrected before delivery. Net effect: a materially better report - the corrected reading surfaced revenue-per-unit-of-turnover roughly halving, the defining operating fact of FY2026.",
+  "isin_note": "CP is issued and rolled in many tranches; the FY2024 AR records 213 papers issued and 168 redeemed in one year. Per-ISIN amounts are not disclosed, so amount is left blank rather than apportioned. Aggregate outstanding is Rs 12,931.33 cr at 31-Mar-2026.",
+  "correction_note_v2": "v1 was materially wrong on four structural points, found by comparing against the CareEdge press release of the SAME DATE. (A) Reasoned from DRAWN debt (maturity tables, all <1yr) to the rated universe and concluded no long-term rating and no outlook - missing CARE AAA; Stable on Rs 3,000 cr entirely (FM31). (B) Tabled outstandings instead of rated limits; the CP limit is Rs 20,000 cr against Rs 12,931 cr drawn, so ~Rs 7,069 cr of headroom and the enhancement from Rs 18,000 cr were invisible. (C) Used total equity, plain debt/equity and closing-equity ROE instead of CareEdge's TNW / gearing-incl-non-fund-based / average-TNW RONW (FM32). (D) Overstated liquidity 23x by counting client funds and exchange margin as company cash - Rs 9,622.71 cr claimed against Rs 422 cr unencumbered (FM34). Also excluded cost-to-income and ROTA by generalising an NBFC rule to broking (FM33), missed the MTF Q1FY27 figure and framing, missed the RBI 13-Feb-2026 directions, and withdrew an unverified 'revenue yield on turnover' ratio built on a notional-turnover denominator."
+}

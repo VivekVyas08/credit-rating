@@ -1,0 +1,12 @@
+{
+  "agency": "CareEdge",
+  "sector": "fmcg",
+  "peer": "AVG Logistics Limited_08 Jan 2021.md",
+  "required_rows": [
+    "Total Operating Income",
+    "PBILDT",
+    "PAT",
+    "Overall Gearing (times)",
+    "Interest coverage (times)"
+  ]
+}

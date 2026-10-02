@@ -1,0 +1,27 @@
+{
+  "name": "Dhampur Bio Organics Limited",
+  "agency": "CareEdge",
+  "sector": "Sugar",
+  "entity_type": "corporate",
+  "created": "2026-09-04T20:29:50",
+  "aliases": [
+    "DBO",
+    "DBOL",
+    "Dhampur Bio Organics Limited"
+  ],
+  "methodologies": [
+    "Criteria_Rating_Methodology_Manufacturing_Companies_March_2025.md",
+    "Rating_Methodology_Sugar_Sector_March_2025.md",
+    "Assigning Outlook or Rating Watch to Credit Ratings.md",
+    "Financial_Ratios_Non_Financial_Sector_March_2025.md",
+    "Liquidity Analysis of Non-Financial Sector Entities - Sept 2024.md",
+    "Policy on Default Recognition_Jan 2025.md",
+    "Rating_of_Short_Term_Instruments_Feb_2025.md"
+  ],
+  "isins": [],
+  "step12_scaling_decision": "Full artefact built, not scaled down: DBOL is a corporate with term debt, so a 5-year forward model was required (failure mode 35). DBOL_5yr_Model.xlsx carries base and stress cases with the debt path derived from the funding gap, plus CreditRatios and DebtBreakup tabs. Recorded for completeness, not as a reduction.",
+  "rating_delivered": "2026-09-13",
+  "rating_outcome": "CARE BBB+; Positive / CARE A2 (outlook revised from Stable); Rs 1,062.05 cr bank facilities (CRA-published 04-Sep-2026, issuer-unconfirmed); STANDALONE; anchor A+ less 3 notches; supersedes the 04-Sep-2026 consolidated rationale",
+  "independence_note": "Duplicate of Companies/dhampur (CARE BBB+, 19-Jul-2026). Operator directed a fresh independent rating. R7 qualified: the analyst knew the prior grade. Disclosed in the workpaper s0 and minutes s3. Committee directed that one of the two folders be retired.",
+  "basis": "standalone"
+}

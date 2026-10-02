@@ -1,0 +1,18 @@
+{
+  "agency": "CareEdge",
+  "sector": "nbfc",
+  "peer": "360 One Wam Limited_16 Feb 2026.md",
+  "required_rows": [
+    "Total income",
+    "PAT",
+    "Tangible net worth",
+    "Loan book",
+    "Overallgearing (x)",
+    "Total assets",
+    "RONW(%)",
+    "ROTA(%)",
+    "Cost to income(%)",
+    "Interest coverage(x)",
+    "NNPA(%)"
+  ]
+}

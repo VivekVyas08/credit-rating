@@ -1,0 +1,20 @@
+{
+  "name": "TVS Credit",
+  "agency": "ICRA",
+  "sector": "Financial Sector - Non-Banking Financial Companies (NBFC-ICC, RBI Middle Layer)",
+  "entity_type": "nbfc",
+  "created": "2026-08-15T15:06:51",
+  "aliases": [
+    "TC"
+  ],
+  "methodologies": [
+    "1003~NBFCs, Rating Methodology, Dec 2025.md",
+    "927~Rating Approach, Financial Ratio Analysis, Sep 2024.md",
+    "132~Policy in respect of non-cooperation by a rated entity, Jan 2025.md",
+    "134~Policy on Default Recognition, Jan 2025.md"
+  ],
+  "isins": [],
+  "routing_corrected_note": "intake defaulted to Corporate Credit Rating Methodology; TVS Credit is an NBFC-ICC (RBI Middle Layer) per its own FY2026 AR - re-routed to the NBFC methodology 15-Aug-2026",
+  "rating_delivered": "2026-08-15T16:41:14",
+  "delivery_scope": "Rationale, workpaper, ratio Excel. NOTE: 6 of 9 uploaded documents belong to Aptus Value Housing Finance (unrelated company) and were EXCLUDED - no post-FY2026 data. FY2026 AR is 27% OCR-corrupted; AUM/disbursements/stage-3 not extractable. See Workpaper s0."
+}

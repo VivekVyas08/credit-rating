@@ -1,0 +1,16 @@
+{
+  "name": "Tata Communications",
+  "agency": "CareEdge",
+  "sector": "Corporate - Manufacturing (master criteria)",
+  "entity_type": "corporate",
+  "created": "2026-09-03T22:50:32",
+  "aliases": [
+    "TC"
+  ],
+  "methodologies": [
+    "Criteria_Rating_Methodology_Manufacturing_Companies_March_2025.md",
+    "Criteria_Rating_Methodology_Services_Sector_March_2025.md"
+  ],
+  "isins": [],
+  "step12_scaling_decision": ""
+}

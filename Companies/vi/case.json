@@ -1,0 +1,17 @@
+{
+  "name": "Vi",
+  "agency": "ICRA",
+  "sector": "Corporate (no specific sector methodology)",
+  "entity_type": "corporate",
+  "created": "2026-09-01T10:39:53",
+  "aliases": [
+    "Vodafone Idea Limited",
+    "VIL"
+  ],
+  "methodologies": [
+    "960~Corporate Credit Rating Methodology, Jul 2025.md",
+    "957~Telecom Services, Rating Methodology, Jul 2025.md"
+  ],
+  "isins": [],
+  "step12_scaling_decision": "A five-year projection of the credit path WAS built (Companies/vi/forward_model.py), with base and stress cases and the debt path DERIVED from the funding gap rather than assumed (failure mode 18). What was NOT run is the equity-research plugin's native 3-statement workbook. Reason: the three variables that decide this rating are (a) whether Government and promoter support continues, (b) whether the Rs 25,000 crore of term debt for the Rs 45,000 crore FY2027-FY2029 capex programme can be raised - the annual report states discussions with lenders are still under way - and (c) the AGR repayment cliff of Rs 10,608 crore a year from FY2036, which sits OUTSIDE any five-year window. A full P&L/balance-sheet/cash-flow template would add presentation on top of the funding-gap arithmetic without touching any of the three. The projection covers FY2027-FY2031 and is reported in the workpaper with both cases. Recorded 01-Sep-2026."
+}

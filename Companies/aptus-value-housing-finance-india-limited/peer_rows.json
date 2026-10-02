@@ -1,0 +1,18 @@
+{
+  "agency": "CareEdge",
+  "sector": "housing finance company (hfc)",
+  "peer": "Jana Small Finance Bank Limited_09 Jul 2026.md",
+  "required_rows": [
+    "Total income",
+    "Profit after tax(PAT)",
+    "Total assets",
+    "Net interest margin(NIM) (%)",
+    "ROTA(%)",
+    "Gross non-performingassets(NPA) (%)",
+    "Net non-performingassets(NPA) (%)",
+    "Capital adequacyratio(CAR) (%)"
+  ],
+  "peers_sampled": 20,
+  "peers_with_long_term_rating": 15,
+  "peers_with_short_term_rating": 7
+}

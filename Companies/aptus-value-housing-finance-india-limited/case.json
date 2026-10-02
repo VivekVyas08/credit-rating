@@ -1,0 +1,22 @@
+{
+  "name": "APTUS VALUE HOUSING FINANCE INDIA LIMITED",
+  "agency": "CareEdge",
+  "sector": "Housing Finance Company (HFC)",
+  "entity_type": "nbfc",
+  "created": "2026-08-21T22:40:28",
+  "aliases": [
+    "AVHFIL"
+  ],
+  "methodologies": [
+    "Criteria_Rating_Methodology_Financial_Ratios_Financial_Sector_February_2025.md",
+    "Criteria_Rating_Methodology_Housing_Finance_Companies_March_2025.md",
+    "Assigning Outlook or Rating Watch to Credit Ratings.md",
+    "Consolidation-and-Combined-Approach-March-2025.md",
+    "Policy on Default Recognition_Jan 2025.md"
+  ],
+  "isins": [],
+  "rating_delivered": "2026-08-21T23:59:00",
+  "rating_outcome": "CARE AA; Stable on Rs 3,245.00 crore total rated - Rs 2,100.00 cr long-term bank facilities and Rs 1,145.00 cr non-convertible debentures (NCD II-VII). Reaffirmed; CareEdge upgraded to AA; Stable on 03-Jul-2025 from AA-; Positive. Matches the CareEdge press release of 02-Jul-2026 held in the reference library. NO DIVERGENCE. Line integrity verified: bank facilities 2,058.75+30.00+11.25=2,100.00; NCDs 45+240+200+280+80+300=1,145.",
+  "delivery_scope": "Rationale + ratio engine (16/16 reproduce CareEdge's published figures) + ratio Excel (9 TieOut checks, 0 failing). check_sections.py PASS, all quality probes clean. CONSOLIDATED basis (Aptus + AFIPL, the wholly-owned NBFC carrying 29% of the managed book). Financial-sector TNW convention (equity - intangibles - DTA) reproduces the published Rs 5,059 cr EXACTLY. Key figures: AUM Rs 13,107 cr (+20.6%, 6-yr CAGR ~26%), PAT Rs 942.94 cr, CRAR 71% vs RBI minimum 15%, on-book gearing 1.56x, ROMA 7.87%, RONW 20.2%, GNPA 1.52% (up from 1.19%). Q1FY27 income +15.2%, PAT +19.0% YoY. NOT built: 5-yr forecast model, valuation, charts, Rating_Scorecard (requested in the intake but out of the delivery scope used for every other case in this batch).",
+  "method_notes": "FM29 applied: the same-issuer CareEdge rationale (02-Jul-2026) was found by preflight probe [1] and its rated-amount table extracted BEFORE drafting, not deferred to Step 14. FM33: preflight probe [1b] auto-picked Jana Small Finance Bank (a BANK) as top peer and HFCL Limited (a telecom cable maker matching the token 'hfc') third; the new top-peers-disagree warning fired, and peer_rows.json was overridden to PNB Housing Finance Limited (03-Jul-2026), the true HFC peer. FM20: an imprecise absence claim about the encumbered/unencumbered liquidity split was caught by the delivery gate and corrected - 'unencumber' returns 3 hits, all boilerplate LCR text, and the Rs 2,061 cr buffer is 'liquid assets AND undrawn sanctions', not cash. Asset quality reported on BOTH measures: AR consolidated GNPA 1.52%/1.19% vs CareEdge gross stage 3 1.45%/1.18% - different classifications, gap not reconcilable from the documents, both stated."
+}

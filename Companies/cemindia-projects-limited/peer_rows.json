@@ -1,0 +1,17 @@
+{
+  "agency": "ICRA",
+  "sector": "construction / EPC (corporate)",
+  "peer": "Ambuja Cements Limited_04 Aug 2026_144796.md (corporate row set; AUTHUM auto-pick was a financial company and is overridden per pre-flight [1b])",
+  "required_rows": [
+    "Operating income",
+    "PAT",
+    "OPBDIT/OI",
+    "PAT/OI",
+    "Total outside liabilities/Tangible net worth (times)",
+    "Total debt/OPBDIT (times)",
+    "Interest coverage (times)"
+  ],
+  "peers_sampled": 20,
+  "peers_with_long_term_rating": 0,
+  "peers_with_short_term_rating": 16
+}
