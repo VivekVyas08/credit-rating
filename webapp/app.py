@@ -2385,4 +2385,13 @@ if __name__ == "__main__":
     # debugger allows in-browser code execution, neither of which belongs in normal use. The
     # tool is localhost-only either way.
     dev = os.environ.get("RATING_DEV") == "1"
+    # On start, auto-connect with the repo (pull latest code) and make sure the offline model is
+    # present on this device - so a fresh clone on any machine just works. Best-effort, never
+    # blocks startup. Skip under the dev auto-reloader's watcher child (WERKZEUG_RUN_MAIN set)
+    # and when RATING_NO_SYNC=1. The 5GB weights are provisioned here, not shipped in git.
+    if os.environ.get("RATING_NO_SYNC") != "1" and os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+        try:
+            _rate_engine().provision()
+        except Exception as _e:                                           # noqa: BLE001
+            print("[startup] provision skipped: %s" % _e)
     app.run(host="127.0.0.1", port=5050, debug=dev, use_reloader=dev, threaded=True)

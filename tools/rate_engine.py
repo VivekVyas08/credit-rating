@@ -530,6 +530,68 @@ def _resolve_gguf(model=None):
     return None
 
 
+def ensure_model(model=None, verbose=True):
+    """Make sure an offline GGUF exists ON THIS DEVICE, into <project>/models/.
+
+    The weights are 5+ GB and cannot live in git (GitHub rejects >100 MB; LFS caps below this
+    file's size), so a fresh clone has the code but not the model. This provisions it once:
+    reuse a local copy if present, else pull it with Ollama and copy it into the project so the
+    in-process engine is thereafter Ollama-independent. Returns the path, or None with
+    instructions printed. Never raises - a provisioning failure must not stop the tool starting.
+    """
+    import shutil
+    import subprocess
+    g = _resolve_gguf(model)
+    if g and (ROOT / "models") == Path(g).parent:
+        return g                                   # already project-local
+    model = model or OLLAMA_DEFAULT_MODEL
+    dst = ROOT / "models" / ("%s.gguf" % model.replace(":", "-").replace("/", "-"))
+    if g:                                          # found elsewhere (e.g. Ollama store) - localise it
+        try:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            if verbose:
+                print("[model] copying weights into the project (one-time): %s" % dst.name)
+            shutil.copy2(g, dst)
+            return str(dst)
+        except Exception as e:                                             # noqa: BLE001
+            if verbose:
+                print("[model] copy failed (%s); using the existing file at %s" % (e, g))
+            return g
+    # nothing on disk: provision via Ollama if available (the one portable downloader we can rely on)
+    if shutil.which("ollama"):
+        if verbose:
+            print("[model] no offline model found; pulling %s via Ollama (one-time ~5GB)..." % model)
+        try:
+            subprocess.run(["ollama", "pull", model], check=True, timeout=3600)
+        except Exception as e:                                             # noqa: BLE001
+            if verbose:
+                print("[model] ollama pull failed: %s" % e)
+            return None
+        return ensure_model(model, verbose)        # now resolvable -> localise
+    if verbose:
+        print("[model] NO offline model on this device. To enable Offline mode, either:\n"
+              "        - install Ollama and run:  ollama pull %s   (the tool copies it in), or\n"
+              "        - copy a .gguf into:  %s\n"
+              "        Online mode (Claude API) works with a key regardless." % (model, ROOT / "models"))
+    return None
+
+
+def provision(verbose=True):
+    """On-start housekeeping so the tool works on any device: pull the latest code from the repo,
+    then make sure the offline model is present. Both best-effort; neither blocks startup."""
+    import subprocess
+    try:
+        r = subprocess.run(["git", "-C", str(ROOT), "pull", "--ff-only"],
+                           capture_output=True, text=True, timeout=60)
+        msg = (r.stdout or r.stderr or "").strip().splitlines()
+        if verbose:
+            print("[sync] %s" % (msg[-1] if msg else "repo up to date"))
+    except Exception as e:                                                 # noqa: BLE001
+        if verbose:
+            print("[sync] git pull skipped (%s)" % e)
+    ensure_model(verbose=verbose)
+
+
 def _embedded_schema():
     """A copy of SCHEMA that forces non-empty prose: llama.cpp's grammar otherwise lets the model
     return blank strings/arrays and stop (observed: 77 output tokens, empty reasoning)."""
