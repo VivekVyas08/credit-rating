@@ -200,7 +200,11 @@ def test_bad_json():
 def test_api_errors():
     """Each SDK exception maps to a clean message, never a traceback."""
     print("\n[5] API error mapping")
-    import anthropic, httpx
+    import anthropic
+    try:                                  # anthropic 1.x is built on httpx2; 0.x on httpx.
+        import httpx2 as httpx            # Use whichever the installed SDK depends on.
+    except ImportError:
+        import httpx
     req = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
 
     def status(cls, code, body):
