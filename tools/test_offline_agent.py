@@ -35,7 +35,7 @@ def _pick_reconciling_case():
                 return d.name
         except Exception:                                                 # noqa: BLE001
             continue
-    raise SystemExit("no reconciling case with the compute()/tieouts() contract to test against")
+    return None                           # no reconciling case (e.g. a fresh clone, no case data)
 
 
 def main():
@@ -48,6 +48,9 @@ def main():
     print("=" * 78)
 
     slug = _pick_reconciling_case()
+    if slug is None:
+        print("\nSKIPPED: no reconciling case under Companies/ (a fresh clone ships no case data).")
+        return
     print("\n[case] %s" % slug)
 
     # Single-shot model: one generation returning the full markdown, with tools OFF.

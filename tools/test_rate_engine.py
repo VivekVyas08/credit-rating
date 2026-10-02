@@ -47,11 +47,17 @@ def _pick_case():
         src = (base / n / "compute_ratios.py").read_text(encoding="utf-8", errors="replace")
         if "def compute(" in src and "def tieouts(" in src:
             return n
-    raise SystemExit("no case under %s exposes compute() and tieouts() - the API-path tests "
-                     "need one contract-conforming engine to exercise" % base)
+    return None                           # no contract-conforming case (e.g. a fresh clone)
 
 
 SLUG = _pick_case()
+if SLUG is None:
+    # A fresh clone has no Companies/ case (case data is not in the repo), so the API-path tests
+    # have nothing to exercise. SKIP cleanly (exit 0) rather than fail - a missing precondition is
+    # not a broken tool. Add a case (or a sample engine) under Companies/ to run these.
+    print("SKIPPED: no case under Companies/ exposes compute()/tieouts() to exercise the "
+          "API-path tests (a fresh clone ships no case data).")
+    raise SystemExit(0)
 _failures = []
 
 
