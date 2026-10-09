@@ -720,7 +720,10 @@ documentation in `Docs/RATING_ENGINES.md`.
     no key. It is what the web app's Mode switch selects for "Offline", and Offline is the
     default wherever no preference is stored. The model file (about 5.35 GB, never in git) is
     downloaded once by the tool: on start the web app checks for it and, if it is missing, shows
-    a setup screen with progress while it downloads in the background (resumable).
+    a setup screen with progress while it downloads in the background (resumable). The download
+    URL is pinned to one Hugging Face commit and the finished file must match `MODEL_SHA256`
+    before it is renamed into `models/` (10-Oct-2026); a mismatch is deleted, and a
+    `CREDITRATING_GGUF_URL` override without its own `CREDITRATING_GGUF_SHA256` is refused.
 
   **What the offline engines are given, and the checks on what they return (02/03-Oct-2026).**
   A small local model is unreliable in specific, observed ways, and each has a mechanical guard:

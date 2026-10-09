@@ -89,6 +89,7 @@ masked fingerprint is shown, so you can tell which credential was used without e
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -680,17 +681,36 @@ def _resolve_gguf(model=None):
 
 
 # Default offline weights: the official IBM Granite 4.1 8B GGUF (Q4_K_M, ~5.35 GB), a public
-# auth-free HuggingFace download. Override with $CREDITRATING_GGUF_URL. Used only when no model
-# is already on the device - it is downloaded ONCE into <project>/models/, then reused.
+# auth-free HuggingFace download, pinned to one repository commit so the file can never change
+# under its checksum. Used only when no model is already on the device - it is downloaded ONCE
+# into <project>/models/, then reused.
 MODEL_URL = os.environ.get(
     "CREDITRATING_GGUF_URL",
-    "https://huggingface.co/ibm-granite/granite-4.1-8b-GGUF/resolve/main/granite-4.1-8b-Q4_K_M.gguf")
+    "https://huggingface.co/ibm-granite/granite-4.1-8b-GGUF/resolve/"
+    "865b82c2e7970d82e3731278c88c57ae7138359c/granite-4.1-8b-Q4_K_M.gguf")
+# SHA-256 of exactly that file: HuggingFace's published LFS id, measured against a real download
+# on 10-Oct-2026. A download that does not match is deleted, never loaded. A $CREDITRATING_GGUF_URL
+# override must bring its own $CREDITRATING_GGUF_SHA256 - an unverifiable download is refused.
+MODEL_SHA256 = (os.environ.get("CREDITRATING_GGUF_SHA256")
+                or ("" if "CREDITRATING_GGUF_URL" in os.environ
+                    else "ed902ac9eb6adce5a90c6a08c8ea201b50e23fdc5976d1cd0362006afac5309e")
+                ).strip().lower()
 
 
-def _download(url, dst, verbose=True, progress=None):
+def _sha256_of(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _download(url, dst, verbose=True, progress=None, sha256=None):
     """Stream a file to dst atomically (.part -> rename). RESUMES a partial .part with an HTTP
     Range request, so a dropped connection does not restart a 5 GB download from zero.
-    `progress(done_bytes, total_bytes)` is called as it goes. Raises on failure."""
+    `progress(done_bytes, total_bytes)` is called as it goes. With `sha256`, the finished .part
+    must hash to it BEFORE it is renamed into place (so nothing ever loads a bad file); a mismatch
+    deletes it. Raises on failure."""
     import urllib.error
     import urllib.request
     dst = Path(dst)
@@ -703,29 +723,38 @@ def _download(url, dst, verbose=True, progress=None):
     try:
         r = urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=60)
     except urllib.error.HTTPError as e:
-        if e.code == 416 and have:                               # .part is already the whole file
-            tmp.replace(dst)
-            return str(dst)
-        raise
-    with r:                                                      # follows HF's CDN redirect
-        if have and r.status != 206:                             # server ignored Range: start over
-            have = 0
-        total = have + int(r.headers.get("Content-Length") or 0)
-        done = have
-        with open(tmp, "ab" if have else "wb") as f:
-            while True:
-                chunk = r.read(1 << 20)                         # 1 MiB
-                if not chunk:
-                    break
-                f.write(chunk)
-                done += len(chunk)
-                if progress:
-                    progress(done, total)
-                if verbose and total:
-                    print("\r[model] downloading %3d%%  (%.2f / %.2f GB)"
-                          % (done * 100 // total, done / 1e9, total / 1e9), end="", flush=True)
-    if verbose:
-        print()
+        if not (e.code == 416 and have):                         # 416: .part is already whole
+            raise
+        r = None
+    if r is not None:
+        with r:                                                  # follows HF's CDN redirect
+            if have and r.status != 206:                         # server ignored Range: start over
+                have = 0
+            total = have + int(r.headers.get("Content-Length") or 0)
+            done = have
+            with open(tmp, "ab" if have else "wb") as f:
+                while True:
+                    chunk = r.read(1 << 20)                     # 1 MiB
+                    if not chunk:
+                        break
+                    f.write(chunk)
+                    done += len(chunk)
+                    if progress:
+                        progress(done, total)
+                    if verbose and total:
+                        print("\r[model] downloading %3d%%  (%.2f / %.2f GB)"
+                              % (done * 100 // total, done / 1e9, total / 1e9), end="", flush=True)
+        if verbose:
+            print()
+    if sha256:
+        if verbose:
+            print("[model] checking the download's SHA-256...")
+        got = _sha256_of(tmp)
+        if got != sha256.lower():
+            tmp.unlink()
+            raise ValueError("SHA-256 mismatch - the downloaded file is not the expected model "
+                             "(got %s..., expected %s...); it was deleted"
+                             % (got[:12], sha256.lower()[:12]))
     tmp.replace(dst)
     return str(dst)
 
@@ -762,7 +791,12 @@ def ensure_model(model=None, verbose=True, progress=None):
                 print("[model] copy failed (%s); using the existing file at %s" % (e, g))
             return g
     # nothing on disk: DOWNLOAD it automatically (no Ollama required)
-    if MODEL_URL:
+    if MODEL_URL and not MODEL_SHA256:
+        MODEL_STATE["detail"] = ("CREDITRATING_GGUF_URL is set without CREDITRATING_GGUF_SHA256 - "
+                                 "an unverifiable download was refused")
+        if verbose:
+            print("[model] %s" % MODEL_STATE["detail"])
+    elif MODEL_URL:
         name = MODEL_URL.rsplit("/", 1)[-1] or "offline-model.gguf"
         if not name.endswith(".gguf"):
             name += ".gguf"
@@ -770,7 +804,8 @@ def ensure_model(model=None, verbose=True, progress=None):
             print("[model] no offline model on this device; downloading it once (~5 GB).\n"
                   "        %s" % MODEL_URL)
         try:
-            return _download(MODEL_URL, ROOT / "models" / name, verbose, progress)
+            return _download(MODEL_URL, ROOT / "models" / name, verbose, progress,
+                             sha256=MODEL_SHA256)
         except Exception as e:                                             # noqa: BLE001
             MODEL_STATE["detail"] = "download failed: %s" % e
             if verbose:

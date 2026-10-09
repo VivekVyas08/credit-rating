@@ -553,6 +553,81 @@ def test_trends_and_sync():
         RE.ROOT = real_root
 
 
+def test_model_download_check():
+    """The offline model is verified against a pinned SHA-256 before anything can load it.
+
+    file:// URLs and a temp folder only - no network, and the real models/ folder is untouched."""
+    import hashlib
+    import os
+    import shutil
+    import subprocess
+    import tempfile
+    print("\n[16] model download SHA-256 check")
+    tmp = Path(tempfile.mkdtemp())
+    real = (RE.ROOT, RE.MODEL_URL, RE.MODEL_SHA256, RE._resolve_gguf)
+    real_which = shutil.which
+    try:
+        src = tmp / "src.gguf"
+        src.write_bytes(b"GGUF" + bytes(range(256)) * 4096)            # ~1 MB stand-in
+        good = hashlib.sha256(src.read_bytes()).hexdigest()
+        url = src.as_uri()
+        p = RE._download(url, tmp / "a.gguf", verbose=False, sha256=good.upper())
+        check(Path(p).read_bytes() == src.read_bytes() and not (tmp / "a.gguf.part").exists(),
+              "a matching download is renamed into place (hash compared case-insensitively)")
+        try:
+            RE._download(url, tmp / "b.gguf", verbose=False, sha256="0" * 64)
+            check(False, "a mismatching download raises")
+        except ValueError as e:
+            check("mismatch" in str(e) and not (tmp / "b.gguf").exists()
+                  and not (tmp / "b.gguf.part").exists(),
+                  "a mismatching download raises and is deleted - never left where it could load")
+        (tmp / "c.gguf.part").write_bytes(b"stale partial from some other file")
+        p = RE._download(url, tmp / "c.gguf", verbose=False, sha256=good)
+        check(Path(p).read_bytes() == src.read_bytes(),
+              "a stale .part is replaced when the server ignores Range, then verified")
+
+        # ensure_model wiring: nothing on disk, temp project root, Ollama fallback switched off
+        RE.ROOT, RE._resolve_gguf = tmp / "proj", (lambda model=None: None)
+        shutil.which = lambda name: None
+        RE.MODEL_URL, RE.MODEL_SHA256 = url, ""
+        RE.MODEL_STATE["detail"] = ""
+        check(RE.ensure_model(verbose=False) is None and "refused" in RE.MODEL_STATE["detail"]
+              and not list(tmp.joinpath("proj").rglob("*.gguf*")),
+              "a download URL without a SHA-256 is refused - nothing is fetched")
+        RE.MODEL_SHA256 = "f" * 64
+        check(RE.ensure_model(verbose=False) is None and "mismatch" in RE.MODEL_STATE["detail"]
+              and not list(tmp.joinpath("proj").rglob("*.gguf*")),
+              "a mismatching download leaves no model behind and the setup screen says why")
+        RE.MODEL_SHA256 = good
+        p = RE.ensure_model(verbose=False)
+        check(bool(p) and Path(p).parent == tmp / "proj" / "models",
+              "a verified download lands in models/")
+    finally:
+        RE.ROOT, RE.MODEL_URL, RE.MODEL_SHA256, RE._resolve_gguf = real
+        shutil.which = real_which
+        shutil.rmtree(tmp, ignore_errors=True)
+
+    # the module-level rule, checked in fresh interpreters so this process's env is irrelevant
+    code = ("import sys; sys.path.insert(0, %r); import rate_engine as R; "
+            "print(R.MODEL_URL); print(repr(R.MODEL_SHA256))" % str(Path(RE.__file__).parent))
+    base = {k: v for k, v in os.environ.items()
+            if k not in ("CREDITRATING_GGUF_URL", "CREDITRATING_GGUF_SHA256")}
+
+    def run(**extra):
+        r = subprocess.run([sys.executable, "-c", code], env=dict(base, **extra),
+                           capture_output=True, text=True, timeout=120)
+        return r.stdout.split("\n")
+    url_line, sha_line = run()[:2]
+    check("/resolve/865b82c2e7970d82e3731278c88c57ae7138359c/" in url_line
+          and sha_line == repr("ed902ac9eb6adce5a90c6a08c8ea201b50e23fdc5976d1cd0362006afac5309e"),
+          "default: the URL is pinned to one commit and carries that file's SHA-256")
+    check(run(CREDITRATING_GGUF_URL="https://example.invalid/x.gguf")[1] == "''",
+          "a URL override with no hash gets no hash (so the download is refused)")
+    check(run(CREDITRATING_GGUF_URL="https://example.invalid/x.gguf",
+              CREDITRATING_GGUF_SHA256=" ABCdef ")[1] == "'abcdef'",
+          "a URL override with its own hash uses it (trimmed, lower-cased)")
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -566,7 +641,7 @@ def main():
                test_ui_model_pref,
                test_ollama_success, test_ollama_request_shape, test_ollama_errors,
                test_sdk_credential_detection, test_offline_output_guards,
-               test_trends_and_sync):
+               test_trends_and_sync, test_model_download_check):
         fn()
     print("\n" + "=" * 78)
     if _failures:

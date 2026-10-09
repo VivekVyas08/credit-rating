@@ -76,7 +76,9 @@ You need **Python 3.10 or newer** (tested on 3.12 and 3.14) and **git**. The lau
    **Settings → Code sync**, including the reason if it could not sync.
 2. **Offline model check.** If the offline model is already on the machine, the tool opens
    straight away. If not, it opens on a setup screen and downloads the model once (about
-   5.35 GB) with a progress bar. An interrupted download resumes where it stopped. Press
+   5.35 GB) with a progress bar. An interrupted download resumes where it stopped. Before the
+   file is used it is checked against its published SHA-256; a file that does not match is
+   deleted and the setup screen says so. Press
    **Continue in Online mode instead** if you do not want to wait.
 3. **Mode.** The **Online / Offline** switch in the header chooses how a rating view is
    produced. Offline is the default on a new machine.
@@ -204,6 +206,10 @@ The browser can reach only case documents, the reference library and deliverable
 settings, `.git` or anything outside the project. Uploaded files other than text are downloaded,
 never displayed as pages. The Werkzeug debugger (`RATING_DEV=1`) is refused on a network address.
 Your API key is kept in your home folder, outside this repository.
+
+The offline model download is pinned to one commit of IBM's Hugging Face repository and must match
+its SHA-256 before it is used. To download a different model file, set `CREDITRATING_GGUF_URL`
+together with `CREDITRATING_GGUF_SHA256`; a URL without a hash is refused.
 
 ## Tests
 
