@@ -11,7 +11,8 @@ mechanical delivery checks, and two ways to get a rating view: **Online** (Claud
 **Contents:** [How it works](#how-it-works) · [Start it](#start-it) ·
 [First start on a new machine](#first-start-on-a-new-machine) · [How to use it](#how-to-use-it) ·
 [Online and Offline](#online-and-offline) · [Command line](#command-line) ·
-[What is in this repository](#what-is-in-this-repository) · [Troubleshooting](#troubleshooting)
+[What is in this repository](#what-is-in-this-repository) · [Security](#security) ·
+[Troubleshooting](#troubleshooting)
 
 ---
 
@@ -62,7 +63,7 @@ flowchart LR
 |---|---|
 | **Windows** | Double-click `Start Credit Rating Tool.bat` |
 | **macOS / Linux** | Double-click `Start Credit Rating Tool.command`, or run it in a terminal |
-| **Docker** | `docker build -t credit-rating .` then `docker run -p 5050:5050 -v cr-models:/app/models credit-rating` |
+| **Docker** | `docker build -t credit-rating .` then `docker run -p 127.0.0.1:5050:5050 -e RATING_PASSWORD=choose-one -v cr-models:/app/models credit-rating` |
 
 Then open <http://localhost:5050>.
 
@@ -179,6 +180,31 @@ Figures still come only from the verified ratio suite.
 **Not in the repository:** PDFs, the offline model file (downloaded on first start into
 `models/`), your API key, and per-machine settings.
 
+## Security
+
+By default the web app listens on `127.0.0.1` only: nothing outside your own computer can reach it,
+and no login is needed.
+
+**Serving it to other machines** (or from Docker) requires a login. The app refuses to start
+on a network address without one:
+
+```bash
+python webapp/app.py --set-password    # stores a salted scrypt hash in your home folder, never the password
+```
+
+or pass `RATING_PASSWORD` as an environment variable (as in the Docker command above). Also list
+the name or IP that people will type in the browser, for example
+`RATING_ALLOWED_HOSTS=192.168.1.20`; any other address is refused. The built-in server speaks plain
+HTTP, so beyond a trusted network put it behind an HTTPS reverse proxy.
+
+What the app does on every request: only scripts carrying a per-page nonce may run
+(Content-Security-Policy), posts from other websites are refused (CSRF), unknown `Host` names are
+refused (DNS rebinding), and posts are rate-limited (60 a minute; sign-in 10 per 5 minutes).
+The browser can reach only case documents, the reference library and deliverables, never source,
+settings, `.git` or anything outside the project. Uploaded files other than text are downloaded,
+never displayed as pages. The Werkzeug debugger (`RATING_DEV=1`) is refused on a network address.
+Your API key is kept in your home folder, outside this repository.
+
 ## Tests
 
 ```bash
@@ -187,6 +213,7 @@ python tools/test_offline_agent.py
 python tools/test_fm47_52.py
 python tools/test_no_control_chars.py
 python webapp/test_app.py
+python webapp/test_security.py
 ```
 
 ---

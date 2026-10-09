@@ -49,7 +49,7 @@ CODE = [
     "engine_contract.py", "check_sections.py", "preflight.py", "rate_engine.py",
     "build_rationale.py", "make_spreads.py", "test_rate_engine.py",
 ]
-WEBAPP = ["app.py", "README.md", "requirements.txt", "Rating Agent.bat"]
+WEBAPP = ["app.py", "README.md", "requirements.txt"]
 
 # --- everything that must NOT ship, with why (used by --list and by the audit) ------------------
 WITHHELD = {

@@ -1,8 +1,12 @@
 # Credit Rating tool dependencies (works on any system: pip install -r requirements.txt).
 # For llama-cpp-python's CPU wheel, add:  --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
-flask
+# Minimum versions: the first releases without known vulnerabilities (pip-audit, 10-Oct-2026).
+# flask>=3.1 is also required for the Host check (TRUSTED_HOSTS) - older Flask ignores it silently.
+flask>=3.1
+werkzeug>=3.1.9
+anyio>=4.14.2
 anthropic
-markdown
+markdown>=3.5
 openpyxl
 pymupdf
 pymupdf4llm

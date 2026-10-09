@@ -3,3 +3,5 @@
 *.command -text
 *.sh      -text
 *.bat     text eol=crlf
+Dockerfile text eol=lf
+.dockerignore text eol=lf

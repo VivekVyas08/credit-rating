@@ -68,4 +68,4 @@ you can see the output — run it from a terminal in the project root.
 ### If Settings is missing after an update
 
 The app does not auto-reload. Stop the running server (Ctrl+C in its window, or close it) and
-start it again with `Rating Agent.bat`.
+start it again with `Start Credit Rating Tool.bat` in the project root.

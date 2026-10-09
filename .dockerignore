@@ -5,3 +5,11 @@ models/
 **/*.pyc
 *.part
 .venv/
+# Local-only files: never baked into an image someone might push or share.
+.claude/
+.env*
+**/*.log
+webapp/ui_prefs.json
+node_modules/
+_public/
+*.bak

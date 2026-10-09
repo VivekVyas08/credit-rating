@@ -89,7 +89,6 @@ masked fingerprint is shown, so you can tell which credential was used without e
 """
 
 import argparse
-import importlib.util
 import json
 import os
 import re
@@ -235,7 +234,7 @@ def run_tieouts(mod):
 
 
 def ratio_table(mod, R):
-    rows, order = [], None
+    order = None
     for y in mod.YEARS:
         if order is None:
             order = [k for k, v in R[y].items() if isinstance(v, (int, float))]

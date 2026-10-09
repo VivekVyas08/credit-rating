@@ -3,20 +3,28 @@
 # Cases live in <project root>/Companies/<slug>/ ; outputs (rationale/workpaper .md/.pdf)
 # are auto-detected in the project root and the case folder.
 
+import html as html_lib
 import json
+import os
 import re
+import secrets
 import shutil
 import sys
 import threading
+import time
 import unicodedata
 import uuid
+from collections import defaultdict, deque
 from datetime import datetime
+from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import quote, urlsplit
 
 import markdown as md_lib
-from flask import (Flask, abort, flash, jsonify, redirect,
-                   render_template_string, request, send_file, url_for)
+from flask import (Flask, abort, flash, g, jsonify, redirect,
+                   render_template_string, request, send_file, session, url_for)
 from markupsafe import escape as h
+from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -27,8 +35,194 @@ CASES_DIR = ROOT / "Companies"
 CASES_DIR.mkdir(exist_ok=True)
 
 app = Flask(__name__)
-app.secret_key = "credit-rating-local-tool"
-app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024  # 1 GB per request
+
+# ------------------------------------------------------------------- security
+# A fresh random key per process. The old fixed string was in the source on GitHub, so anyone
+# could forge this app's signed session cookie; a restart now just signs you out.
+app.secret_key = secrets.token_hex(32)
+app.config.update(
+    MAX_CONTENT_LENGTH=512 * 1024 * 1024,     # per request; several annual reports at once fit
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    # DNS-rebinding guard: a site whose DNS flips to 127.0.0.1 would otherwise be "same origin"
+    # with this app. Any other Host header gets 400. To serve other machines, list their
+    # names/IPs, comma-separated, in RATING_ALLOWED_HOSTS.
+    TRUSTED_HOSTS=["localhost", "127.0.0.1"]
+                  + [x.strip() for x in os.environ.get("RATING_ALLOWED_HOSTS", "").split(",")
+                     if x.strip()],
+    # A login is required only when a password is configured (see __main__).
+    PASSWORD_HASH=None,
+)
+PASSWORD_FILE = Path.home() / ".credit_rating_web_password"     # a scrypt hash, never the password
+LOOPBACK = ("127.0.0.1", "localhost")
+_SAFE_METHODS = ("GET", "HEAD", "OPTIONS")
+_HITS: dict[str, deque] = defaultdict(deque)
+_HITS_LOCK = threading.Lock()
+
+
+def _rate_limited(key: str, limit: int, window: float) -> bool:
+    """True once `key` has been seen `limit` times inside the last `window` seconds.
+    ponytail: in-memory and per process - right for one local server; use a shared store if this
+    ever runs as several worker processes."""
+    now = time.monotonic()
+    with _HITS_LOCK:
+        q = _HITS[key]
+        while q and q[0] <= now - window:
+            q.popleft()
+        if len(q) >= limit:
+            return True
+        q.append(now)
+        return False
+
+
+def _same_origin() -> bool:
+    """CSRF guard. Browsers send Origin on every POST, so a form on another website that targets
+    this app is refused. A request carrying neither header is not from a web page (curl, tests)."""
+    src = request.headers.get("Origin") or request.headers.get("Referer")
+    if not src:
+        return True
+    u = urlsplit(src)
+    return u.scheme == request.scheme and u.netloc == request.host
+
+
+def _nonce() -> str:
+    return g.get("csp_nonce", "")
+
+
+def save_password(pw: str) -> None:
+    PASSWORD_FILE.write_text(generate_password_hash(pw), encoding="utf-8")    # scrypt, salted
+    PASSWORD_FILE.chmod(0o600)        # owner-only on macOS/Linux; Windows keeps the profile ACL
+
+
+@app.before_request
+def _security_gate():
+    if request.routing_exception is not None:      # untrusted Host (400), unknown URL (404)...
+        raise request.routing_exception            # ...answered before any other hook runs
+    g.csp_nonce = secrets.token_urlsafe(16)
+    if request.method not in _SAFE_METHODS:
+        if not _same_origin():
+            abort(403)
+        if _rate_limited("post:%s" % request.remote_addr, 60, 60):
+            abort(429)
+    if app.config["PASSWORD_HASH"] and not session.get("auth") and request.endpoint != "login":
+        if request.method in _SAFE_METHODS:
+            nxt = quote(request.path) + ("?" + request.query_string.decode("latin-1")
+                                         if request.query_string else "")
+            return redirect(url_for("login", next=nxt))
+        abort(401)
+    return None
+
+
+@app.after_request
+def _security_headers(resp):
+    # Scripts run only if they carry this response's nonce: injected markup cannot run script
+    # even if an escaping bug slips through somewhere.
+    resp.headers["Content-Security-Policy"] = (
+        f"default-src 'self'; script-src 'nonce-{_nonce()}'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; "
+        "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'")
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    resp.headers["X-Frame-Options"] = "SAMEORIGIN"
+    resp.headers["Referrer-Policy"] = "same-origin"
+    resp.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    resp.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+    resp.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
+    return resp
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if not app.config["PASSWORD_HASH"]:
+        return redirect(url_for("agency_picker"))
+    nxt = request.values.get("next", "")
+    if not re.fullmatch(r"/(?![/\\])[!-~]*", nxt) or "\\" in nxt:   # a path on this site only
+        nxt = url_for("agency_picker")
+    if request.method == "POST":
+        if _rate_limited("login:%s" % request.remote_addr, 10, 300):
+            abort(429)
+        if check_password_hash(app.config["PASSWORD_HASH"], request.form.get("password", "")):
+            session.clear()
+            session["auth"] = True
+            return redirect(nxt)
+        flash("Wrong password.")
+    return page("Sign in", f"""<h1>Sign in</h1>
+    <div class="card" style="max-width:440px"><form method="post" class="rowform">
+      <input type="hidden" name="next" value="{h(nxt)}">
+      <input type="password" name="password" autocomplete="current-password"
+             aria-label="Password" required autofocus>
+      <button class="btn">Sign in</button></form></div>""")
+
+
+@app.post("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+# Markdown passes raw HTML straight through, and the reference corpus relies on that (<br>, <sup>,
+# <u>, <mark>). So the rendered HTML is filtered against an allowlist instead: known-safe tags
+# and attributes are kept, every other tag is shown as text, and links may only be http(s),
+# mailto or relative - no javascript:, no event handlers, no iframes.
+_MD_TAGS = {"p", "br", "hr", "h1", "h2", "h3", "h4", "h5", "h6", "strong", "em", "b", "i", "u",
+            "s", "del", "mark", "sup", "sub", "code", "pre", "blockquote", "ul", "ol", "li",
+            "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption", "a", "img", "span",
+            "div", "dl", "dt", "dd"}
+_MD_VOID = {"br", "hr", "img"}
+_MD_ATTRS = {"a": {"href", "title"}, "img": {"src", "alt", "title"}, "ol": {"start"},
+             "code": {"class"}, "th": {"align", "style", "colspan", "rowspan"},
+             "td": {"align", "style", "colspan", "rowspan"}}
+
+
+def _safe_url(v: str) -> bool:
+    v = re.sub(r"[\x00-\x20\x7f]+", "", v)        # browsers ignore these inside a URL scheme
+    m = re.match(r"([a-zA-Z][a-zA-Z0-9+.\-]*):", v)
+    return m is None or m.group(1).lower() in ("http", "https", "mailto")
+
+
+def _safe_attr(tag: str, k: str, v: str) -> bool:
+    if k not in _MD_ATTRS.get(tag, ()):
+        return False
+    if k in ("href", "src"):
+        return _safe_url(v)
+    if k == "style":
+        return re.fullmatch(r"\s*text-align:\s*(left|right|center)\s*;?\s*", v) is not None
+    if k == "class":
+        return re.fullmatch(r"language-[\w+#.-]+", v) is not None
+    return True
+
+
+class _MdSanitizer(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.out: list[str] = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag not in _MD_TAGS:
+            self.out.append(html_lib.escape(self.get_starttag_text() or ""))
+            return
+        kept = "".join(' %s="%s"' % (k, html_lib.escape(v)) for k, v in attrs
+                       if v is not None and _safe_attr(tag, k, v))
+        self.out.append("<%s%s>" % (tag, kept))
+
+    handle_startendtag = handle_starttag
+
+    def handle_endtag(self, tag):
+        if tag not in _MD_TAGS:
+            self.out.append(html_lib.escape("</%s>" % tag))
+        elif tag not in _MD_VOID:
+            self.out.append("</%s>" % tag)
+
+    def handle_data(self, data):
+        self.out.append(html_lib.escape(data))
+    # comments, <!DOCTYPE>, <?pi?> and CDATA have no handler here, so they are dropped
+
+
+def render_md(text: str) -> str:
+    s = _MdSanitizer()
+    s.feed(md_lib.markdown(text, extensions=["tables", "fenced_code"]))
+    s.close()
+    return "".join(s.out)
 
 # ------------------------------------------------------------- upload conversion jobs
 # Uploads of anything other than .md/.xlsx are converted to Markdown in a background thread
@@ -423,7 +617,7 @@ def acronym(name: str) -> str:
 
 def case_path(slug: str) -> Path:
     p = (CASES_DIR / slug).resolve()
-    if not str(p).startswith(str(CASES_DIR.resolve())):
+    if p.parent != CASES_DIR.resolve():       # exactly one folder below Companies/ - no "." or ".."
         abort(404)
     return p
 
@@ -934,13 +1128,15 @@ pre.cmd { background:#1b2a4a; color:#dfe8f7; padding:11px 14px; border-radius:8p
     <button type="submit" name="run_mode" value="online"{{ ' class=on' if run_mode=='online' else '' }}>Online</button>
     <button type="submit" name="run_mode" value="offline"{{ ' class=on' if run_mode=='offline' else '' }}>Offline</button>
   </form>
+  {% if session.get('auth') %}<form method="post" action="{{ url_for('logout') }}">
+    <button class="btn small ghost" type="submit" style="color:#c3d0ea;border-color:rgba(255,255,255,.25)">Sign out</button></form>{% endif %}
   <span class="sub">ICRA &middot; CRISIL &middot; CareEdge</span>
 </header>
 <main>
 {% with msgs = get_flashed_messages() %}{% for m in msgs %}<div class="flash">&#10003; {{ m }}</div>{% endfor %}{% endwith %}
 {{ body|safe }}
 </main>
-<script>
+<script nonce="{{ nonce }}">
 function copyPrompt(){ const t=document.getElementById('kickoff');
   t.select(); document.execCommand('copy');
   document.getElementById('copybtn').textContent='Copied!';
@@ -1035,13 +1231,41 @@ document.querySelectorAll('form.upform').forEach(f => {
     if (pendingUploads === 0) setTimeout(() => location.reload(), 600);
   });
 });
+
+/* Behaviour that used to sit in inline on* attributes. The Content-Security-Policy runs only
+   scripts that carry this page's nonce, which inline handlers cannot, so they are wired here. */
+document.addEventListener('submit', e => {
+  const msg = e.target.dataset && e.target.dataset.confirm;
+  if (msg && !confirm(msg)) e.preventDefault();
+});
+document.addEventListener('change', e => {
+  if (e.target.matches && e.target.matches('[data-autosubmit]')) e.target.form.submit();
+});
+document.addEventListener('click', e => {
+  const el = e.target.closest && e.target.closest('[data-action]');
+  if (!el) return;
+  const act = el.dataset.action;
+  if (act === 'back') { e.preventDefault(); history.back(); }
+  else if (act === 'reload') location.reload();
+  else if (act === 'copy-prompt') copyPrompt();
+  else if (act === 'copy-session') copySession();
+});
+const methFilter = document.getElementById('methfilter');
+if (methFilter) methFilter.addEventListener('keyup', () => filtMeth(methFilter.value));
+const flow = document.getElementById('flow');
+if (flow) {
+  const fit = () => { try { flow.style.height = flow.contentDocument.documentElement.scrollHeight + 'px'; } catch (e) {} };
+  flow.addEventListener('load', fit);
+  fit();
+}
 </script>
 </body></html>"""
 
 
 def page(title: str, body: str, active: str = ""):
     run_mode = (_read_pref().get("run_mode") or "offline")
-    return render_template_string(PAGE, title=title, body=body, active=active, run_mode=run_mode)
+    return render_template_string(PAGE, title=title, body=body, active=active, run_mode=run_mode,
+                                  nonce=_nonce())
 
 
 # --------------------------------------------------------------------- views
@@ -1136,8 +1360,8 @@ has to be a recorded decision." style="cursor:help">&#9432;</span></label>
       <div class="rowform" style="margin-top:10px; align-items:flex-end">
         <div style="flex:3 1 320px"><label class="field-label" for="descInp">What does the company do? (optional)</label>
           <input type="text" id="descInp" placeholder="e.g. manufactures cement and clinker, operates in Gujarat"
-                 onkeydown="if(event.key==='Enter'){{event.preventDefault(); suggestSector();}}"></div>
-        <button type="button" class="btn ghost" style="flex:0 0 auto" onclick="suggestSector()">Suggest sector</button>
+                 ></div>
+        <button type="button" class="btn ghost" style="flex:0 0 auto" id="suggestBtn">Suggest sector</button>
       </div>
       <div id="sectorSuggest" class="mut" style="margin-top:8px; min-height:16px"></div>
       <p class="mut" style="margin-top:8px">Every case created here is a <b>{agency}</b> rating - the agent
@@ -1145,7 +1369,7 @@ has to be a recorded decision." style="cursor:help">&#9432;</span></label>
          scale. <b>Sector</b> lists only what {agency}'s methodology library covers and sets the methodology
          the agent routes to. <b>Suggest sector</b> matches the company name/description against the sector
          list by keyword - pick a suggestion or leave the dropdown as-is if none fit.</p>
-      <script>
+      <script nonce="{_nonce()}">
         async function suggestSector() {{
           const name = document.getElementById('nameInp').value.trim();
           const desc = document.getElementById('descInp').value.trim();
@@ -1166,12 +1390,28 @@ has to be a recorded decision." style="cursor:help">&#9432;</span></label>
           }}
           const sel = document.getElementById('sectorSel');
           sel.value = matches[0].sector;
-          out.innerHTML = 'Suggested: <b style="color:var(--navy)">' + matches[0].sector + '</b>' +
-            (matches.length > 1 ? ' &nbsp;(also close: ' + matches.slice(1).map(m =>
-              '<a href="#" onclick="document.getElementById(\\'sectorSel\\').value=this.textContent;return false;">'
-              + m.sector + '</a>').join(', ') + ')' : '') +
-            ' &mdash; confirm it looks right, then Create case.';
+          // Built as DOM nodes, not innerHTML, so a sector name can never become markup.
+          const b = document.createElement('b');
+          b.style.color = 'var(--navy)';
+          b.textContent = matches[0].sector;
+          out.replaceChildren('Suggested: ', b);
+          if (matches.length > 1) {{
+            out.append(' \\u00a0(also close: ');
+            matches.slice(1).forEach((m, i) => {{
+              const a = document.createElement('a');
+              a.href = '#';
+              a.textContent = m.sector;
+              a.addEventListener('click', ev => {{ ev.preventDefault(); sel.value = m.sector; }});
+              out.append(i ? ', ' : '', a);
+            }});
+            out.append(')');
+          }}
+          out.append(' \\u2014 confirm it looks right, then Create case.');
         }}
+        document.getElementById('suggestBtn').addEventListener('click', suggestSector);
+        document.getElementById('descInp').addEventListener('keydown', e => {{
+          if (e.key === 'Enter') {{ e.preventDefault(); suggestSector(); }}
+        }});
       </script>
     </div>"""
     return page(f"{agency} Cases", body, active="cases")
@@ -1276,10 +1516,10 @@ def company(slug):
         badge = ('<span class="badge done">complete</span>' if s["done"] else
                  '<span class="badge opt">optional</span>' if not s["required"] else "")
         files_html = "".join(
-            f'<div>&#128196; <a href="{url_for("doc_file", slug=slug, slot=s["key"], fname=f.name)}">{f.name}</a> '
+            f'<div>&#128196; <a href="{url_for("doc_file", slug=slug, slot=s["key"], fname=f.name)}">{h(f.name)}</a> '
             f'<form style="display:inline" method="post" action="{url_for("delete_doc", slug=slug, slot=s["key"])}"'
-            f' onsubmit="return confirm(\'Remove {f.name}?\')">'
-            f'<input type="hidden" name="fname" value="{f.name}">'
+            f' data-confirm="Remove {h(f.name)}?">'
+            f'<input type="hidden" name="fname" value="{h(f.name)}">'
             f'<button class="btn small danger">remove</button></form></div>'
             for f in s["files"]) or '<span class="mut">no files yet</span>'
         need = f' <span class="mut">({len(s["files"])}/{s["min_files"]} files)</span>' if s["min_files"] > 1 else ""
@@ -1314,7 +1554,7 @@ def company(slug):
             <form style="display:inline" method="post" action="{url_for('toggle_isin', slug=slug, idx=i)}">
               <button class="btn small ghost">{'Untick' if ins.get('uploaded') else 'Tick as uploaded'}</button></form>
             <form style="display:inline" method="post" action="{url_for('delete_isin', slug=slug, idx=i)}"
-                  onsubmit="return confirm('Delete this instrument?')">
+                  data-confirm="Delete this instrument?">
               <button class="btn small danger">delete</button></form></td></tr>"""
     isin_table = (f'<table><tr><th></th><th>ISIN</th><th>Instrument</th>'
                   f'<th>Rated amount (Rs. crore)</th><th></th></tr>{isin_rows}</table>'
@@ -1324,9 +1564,9 @@ def company(slug):
     _auto_clear_delivered_requests(case, slug, outs)
     out_rows = "".join(
         f"""<tr><td><span class="badge {'done' if o['kind']=='Rating Rationale' else 'opt'}">{o['kind']}</span></td>
-        <td>{'<a href="' + url_for('view_output', rel=o['rel']) + '">' + o['path'].name + '</a>'
+        <td>{'<a href="' + url_for('view_output', rel=o['rel']) + '">' + _e(o['path'].name) + '</a>'
              if o['path'].suffix == '.md' else
-             '<a href="' + url_for('raw_output', rel=o['rel']) + '">' + o['path'].name + '</a>'}</td>
+             '<a href="' + url_for('raw_output', rel=o['rel']) + '">' + _e(o['path'].name) + '</a>'}</td>
         <td class="mut">{o['mtime'].strftime('%d %b %Y %H:%M')}</td>
         <td><a class="btn small ghost" href="{url_for('raw_output', rel=o['rel'])}">download</a></td></tr>"""
         for o in outs)
@@ -1365,20 +1605,19 @@ def company(slug):
     meth_rows = "".join(
         f"""<label style="display:block; padding:3px 6px; border-radius:5px;
               background:{'#e2f3e6' if m in selected else 'transparent'}" class="methrow">
-           <input type="checkbox" name="meth" value="{m}"{' checked' if m in selected else ''}>
-           {m}{' <span class="badge opt">suggested</span>' if m in suggested else ''}</label>"""
+           <input type="checkbox" name="meth" value="{h(m)}"{' checked' if m in selected else ''}>
+           {h(m)}{' <span class="badge opt">suggested</span>' if m in suggested else ''}</label>"""
         for m in sorted(all_meth, key=lambda m: (m not in selected, m not in suggested, m.lower())))
     meth_card = f"""
     <div class="card" id="sec2"><h2 style="margin-top:0"><span class="secnum">2</span> Applicable methodology
         <span class="badge done">{agency}</span></h2>
       <p class="mut">Only the ticked files are named in the kickoff prompt - the agent reads those
          (plus cross-cutting/policy criteria) instead of routing through the whole folder.
-         Sector-relevant files were pre-selected from <b>{case.get('sector','-')}</b>;
+         Sector-relevant files were pre-selected from <b>{h(case.get('sector','-'))}</b>;
          tick as many as apply, e.g. a sector paper AND the base master AND a support/notching paper.
          Changing the agency re-suggests this list.</p>
       <form method="post" action="{url_for('save_methodologies', slug=slug)}">
-        <input type="text" id="methfilter" placeholder="filter files..." style="max-width:340px; margin-bottom:8px"
-               onkeyup="filtMeth(this.value)">
+        <input type="text" id="methfilter" placeholder="filter files..." style="max-width:340px; margin-bottom:8px">
         <div style="max-height:280px; overflow:auto; border:1px solid var(--line); border-radius:8px; padding:8px" id="methlist">
           {meth_rows or '<span class="mut">No methodology files for this agency yet.</span>'}
         </div>
@@ -1427,14 +1666,14 @@ def company(slug):
            &middot; {h(case.get('sector', case.get('entity_type','corporate').upper()))}
            &middot; routing: {h(case.get('entity_type','corporate'))} &middot; created {h(case.get('created','')[:10])}</p>
         <form method="post" action="{url_for('set_agency', slug=slug)}" class="rowform" style="max-width:340px">
-          <select name="agency" style="flex:0 1 150px" onchange="this.form.submit()">{''.join(
+          <select name="agency" style="flex:0 1 150px" data-autosubmit>{''.join(
               f'<option value="{a}"{" selected" if a == agency_of(case) else ""}>{a}</option>'
               for a in AGENCIES)}</select>
           <button class="btn small ghost">Change agency</button>
         </form>
       </div>
       <form method="post" action="{url_for('delete_case', slug=slug)}"
-            onsubmit="return confirm('Delete the case for {safe_name}? This removes its uploaded documents and checklist. Any rating report/workpaper already saved to the project folder is NOT deleted.')">
+            data-confirm="Delete the case for {safe_name}? This removes its uploaded documents and checklist. Any rating report/workpaper already saved to the project folder is NOT deleted.">
         <button class="btn danger small">Delete case</button>
       </form>
     </div>
@@ -1475,7 +1714,7 @@ def company(slug):
          <i>"start a dedicated session for {safe_name}"</i> and the agent will spawn one.</p>
       <textarea id="sesskick" class="prompt" readonly>{h(sess_prompt)}</textarea>
       <p style="margin-top:8px">
-        <button id="sesscopybtn" class="btn" onclick="copySession()">Copy session prompt</button>
+        <button id="sesscopybtn" class="btn" data-action="copy-session">Copy session prompt</button>
       </p></div>
 
     <div class="card" id="sec5"><h2 style="margin-top:0"><span class="secnum">5</span> Get the output (rating or research)</h2>
@@ -1489,13 +1728,13 @@ def company(slug):
       </ol>
       <textarea id="kickoff" class="prompt" readonly>{h(prompt)}</textarea>
       <p style="margin-top:8px">
-        <button id="copybtn" class="btn" onclick="copyPrompt()">Copy prompt</button>
+        <button id="copybtn" class="btn" data-action="copy-prompt">Copy prompt</button>
         {request_html}
         {research_html}
       </p></div>
 
     <div class="card" id="sec6"><h2 style="margin-top:0"><span class="secnum">6</span> Output - rationale, workpaper &amp; research
-        <button class="btn small ghost" style="float:right" onclick="location.reload()">Refresh</button></h2>
+        <button class="btn small ghost" style="float:right" data-action="reload">Refresh</button></h2>
       {out_table}
       <p class="mut" style="margin-top:10px">Files are matched by company name or alias. Aliases:</p>
       <form method="post" action="{url_for('save_aliases', slug=slug)}" class="rowform" style="max-width:520px">
@@ -1672,10 +1911,16 @@ def delete_doc(slug, slot):
 @app.get("/company/<slug>/file/<slot>/<path:fname>")
 def doc_file(slug, slot, fname):
     load_case(slug)
+    if slot not in SLOT_KEYS:
+        abort(404)
     target = case_path(slug) / "documents" / slot / secure_filename(fname)
     if not target.is_file():
         abort(404)
-    return send_file(target)
+    # Text opens in the browser as plain text; anything else downloads, so an uploaded .svg or
+    # .html can never run as a page of this app.
+    if target.suffix.lower() in (".md", ".markdown", ".txt", ".csv"):
+        return send_file(target, mimetype="text/plain")
+    return send_file(target, as_attachment=True)
 
 
 @app.post("/company/<slug>/isin")
@@ -1852,8 +2097,13 @@ def delete_case(slug):
 
 
 def _safe_output(rel: str) -> Path:
+    """A deliverable-type file inside the project. Never source, settings or model files, never a
+    dot-folder (.git, .claude, .venv), never anything outside the project folder."""
+    root = ROOT.resolve()
     p = (ROOT / rel).resolve()
-    if not str(p).startswith(str(ROOT.resolve())) or not p.is_file():
+    if (not p.is_relative_to(root) or p.suffix.lower() not in OUTPUT_SUFFIXES
+            or any(part.startswith(".") for part in p.relative_to(root).parts)
+            or not p.is_file()):
         abort(404)
     return p
 
@@ -1862,10 +2112,9 @@ def _safe_output(rel: str) -> Path:
 def view_output(rel):
     p = _safe_output(rel)
     if p.suffix.lower() != ".md":
-        return send_file(p)
-    html = md_lib.markdown(p.read_text(encoding="utf-8", errors="replace"),
-                           extensions=["tables", "fenced_code"])
-    body = f"""<p><a href="javascript:history.back()">&larr; Back</a>
+        return send_file(p, as_attachment=True)
+    html = render_md(p.read_text(encoding="utf-8", errors="replace"))
+    body = f"""<p><a href="#" data-action="back">&larr; Back</a>
       &middot; <a href="{url_for('raw_output', rel=rel)}">download raw .md</a></p>
       <div class="card md">{html}</div>"""
     return page(p.stem, body)
@@ -1892,8 +2141,7 @@ def process_flow():
     """
     src = url_for("static", filename="credit_rating_pipeline.html")
     body = f"""<iframe id="flow" src="{src}" title="Credit rating pipeline"
-      style="width:100%;border:0;display:block;min-height:900px"
-      onload="try{{this.style.height=this.contentDocument.documentElement.scrollHeight+'px'}}catch(e){{}}"></iframe>
+      style="width:100%;border:0;display:block;min-height:900px"></iframe>
     <p class="mut" style="margin-top:8px"><a href="{src}" target="_blank" rel="noopener">Open the chart on its own page</a></p>"""
     return page("Process Flow", body, active="process")
 
@@ -1986,9 +2234,9 @@ def library_dir(agency, kind):
     if q:
         files = [p for p in files if q in p.name.lower()]
     rows = "".join(
-        f"""<tr><td>{'<a href="' + url_for('library_view', agency=agency, kind=kind, fname=p.name) + '">' + p.name + '</a>'
+        f"""<tr><td>{'<a href="' + url_for('library_view', agency=agency, kind=kind, fname=p.name) + '">' + _e(p.name) + '</a>'
              if p.suffix.lower() == '.md'
-             else '<a href="' + url_for('library_raw', agency=agency, kind=kind, fname=p.name) + '">' + p.name + '</a>'}</td>
+             else '<a href="' + url_for('library_raw', agency=agency, kind=kind, fname=p.name) + '">' + _e(p.name) + '</a>'}</td>
         <td class="mut">{p.stat().st_size // 1024} KB</td>
         <td><a class="btn small ghost" href="{url_for('library_raw', agency=agency, kind=kind, fname=p.name)}">download</a></td></tr>"""
         for p in files)
@@ -1999,7 +2247,7 @@ def library_dir(agency, kind):
     <p><a href="{url_for('library')}">&larr; Reference Library</a></p>
     <h1>{agency} &middot; {label}</h1>
     <form method="get" class="rowform" style="max-width:420px">
-      <input type="text" name="q" value="{q}" placeholder="filter by filename...">
+      <input type="text" name="q" value="{h(q)}" placeholder="filter by filename...">
       <button class="btn small ghost">Filter</button></form>
     <div class="card">{table}</div>"""
     return page(f"{agency} {label}", body, active="library")
@@ -2012,7 +2260,7 @@ def _safe_lib(agency, kind, fname) -> Path:
     base = (ROOT / cfg[kind]).resolve()
     # Use the basename only (block traversal) but preserve spaces/real chars.
     p = (base / Path(fname).name).resolve()
-    if not str(p).startswith(str(base)) or not p.is_file():
+    if p.parent != base or not p.is_file():
         abort(404)
     return p
 
@@ -2021,9 +2269,8 @@ def _safe_lib(agency, kind, fname) -> Path:
 def library_view(agency, kind, fname):
     p = _safe_lib(agency, kind, fname)
     if p.suffix.lower() != ".md":
-        return send_file(p)
-    html = md_lib.markdown(p.read_text(encoding="utf-8", errors="replace"),
-                           extensions=["tables", "fenced_code"])
+        return send_file(p, as_attachment=True)
+    html = render_md(p.read_text(encoding="utf-8", errors="replace"))
     body = f"""<p><a href="{url_for('library_dir', agency=agency, kind=kind)}">&larr; {agency}</a>
       &middot; <a href="{url_for('library_raw', agency=agency, kind=kind, fname=fname)}">download raw</a></p>
       <div class="card md">{html}</div>"""
@@ -2241,7 +2488,7 @@ def settings():
     if stored:
         clear_form = (
             '<form method="post" action="' + url_for('settings_key_clear') + '" '
-            'onsubmit="return confirm(\'Delete the stored API key?\')" style="margin-top:10px">'
+            'data-confirm="Delete the stored API key?" style="margin-top:10px">'
             '<button class="btn ghost" type="submit">Delete stored key</button></form>')
 
     body = (
@@ -2392,7 +2639,8 @@ def settings_run_mode():
     _write_pref(run_mode=mode)
     flash("Mode set to %s." % ("Offline — built-in model, in-process" if mode == "offline"
                                else "Online — Claude API"))
-    return redirect(request.referrer or url_for("settings"))
+    ref = request.referrer or ""                 # back to the page the switch was on - this site only
+    return redirect(ref if urlsplit(ref).netloc == request.host else url_for("settings"))
 
 
 # ------------------------------------------------------------ offline-model setup screen
@@ -2400,7 +2648,8 @@ def settings_run_mode():
 # the server still comes up at once, the download runs in a background thread, and every page
 # lands here until it finishes (or the operator chooses Online mode). The gate is switched on
 # only when the app is run as a server (__main__), so the test client is never redirected.
-_SETUP_ENDPOINTS = {"setup", "setup_status", "setup_start", "setup_skip", "static"}
+_SETUP_ENDPOINTS = {"setup", "setup_status", "setup_start", "setup_skip", "static",
+                    "login", "logout"}
 
 
 @app.before_request
@@ -2449,7 +2698,7 @@ itself when the download finishes.</p>
       <button class="btn" type="submit" style="background:#5b6b8c">Continue in Online mode instead</button></form>
   </div>
 </div>
-<script>
+<script nonce="%(nonce)s">
 (function(){
   var line=document.getElementById('st-line'), bar=document.getElementById('st-bar'),
       sub=document.getElementById('st-sub'), start=document.getElementById('st-start');
@@ -2470,7 +2719,8 @@ itself when the download finishes.</p>
   tick();
 })();
 </script>""" % {"start": url_for("setup_start"), "skip": url_for("setup_skip"),
-                 "status": url_for("setup_status"), "home": url_for("agency_picker")}
+                 "status": url_for("setup_status"), "home": url_for("agency_picker"),
+                 "nonce": _nonce()}
     return page("Offline model setup", body, active="")
 
 
@@ -2503,7 +2753,31 @@ def setup_skip():
 
 
 if __name__ == "__main__":
-    import os
+    if "--set-password" in sys.argv:
+        import getpass
+        pw = getpass.getpass("New web-app password (8+ characters): ")
+        if len(pw) < 8 or pw != getpass.getpass("Repeat it: "):
+            sys.exit("Not saved: shorter than 8 characters, or the two entries differed.")
+        save_password(pw)
+        print("Saved a scrypt hash (not the password) to %s. Delete that file to remove the login."
+              % PASSWORD_FILE)
+        sys.exit(0)
+    # Login: RATING_PASSWORD (e.g. docker run -e) is hashed in memory at once; otherwise the hash
+    # saved by --set-password. Neither set: no login, which is allowed on localhost only (below).
+    if os.environ.get("RATING_PASSWORD"):
+        app.config["PASSWORD_HASH"] = generate_password_hash(os.environ["RATING_PASSWORD"])
+    elif PASSWORD_FILE.is_file():
+        app.config["PASSWORD_HASH"] = PASSWORD_FILE.read_text(encoding="utf-8").strip() or None
+    host = os.environ.get("RATING_HOST", "127.0.0.1")
+    dev = os.environ.get("RATING_DEV") == "1"
+    if host not in LOOPBACK and not app.config["PASSWORD_HASH"]:
+        sys.exit("Refusing to serve on %s without a login: anyone who can reach that address could "
+                 "read every case and change the settings. Set RATING_PASSWORD, or run "
+                 "'python webapp/app.py --set-password', or leave RATING_HOST unset to stay on "
+                 "this computer only." % host)
+    if host not in LOOPBACK and dev:
+        sys.exit("RATING_DEV=1 turns on the Werkzeug debugger, which runs any code typed into the "
+                 "browser. It is allowed on localhost only.")
     # threaded=True: upload conversion runs in a background thread while the browser polls
     # /upload-progress/<job_id> on the same server - the default single-threaded dev server
     # would block the progress-poll requests behind whatever request is currently running.
@@ -2512,7 +2786,6 @@ if __name__ == "__main__":
     # manual kill-and-restart). Off by default: the reloader spawns a watcher child and the
     # debugger allows in-browser code execution, neither of which belongs in normal use. The
     # tool is localhost-only either way.
-    dev = os.environ.get("RATING_DEV") == "1"
     app.config["MODEL_GATE"] = True      # show the setup screen while the offline model is missing
     # On start, auto-connect with the repo (pull latest code) and, if the offline model is not on
     # this device, start downloading it in the background - so a fresh clone on any machine just
@@ -2521,8 +2794,7 @@ if __name__ == "__main__":
     if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         try:
             _rate_engine().provision(sync=os.environ.get("RATING_NO_SYNC") != "1")
-        except Exception as _e:                                           # noqa: BLE001
-            print("[startup] provision skipped: %s" % _e)
+        except Exception as exc:                                          # noqa: BLE001
+            print("[startup] provision skipped: %s" % exc)
     # Bind 127.0.0.1 by default (localhost-only); RATING_HOST=0.0.0.0 to serve from a container.
-    host = os.environ.get("RATING_HOST", "127.0.0.1")
     app.run(host=host, port=5050, debug=dev, use_reloader=dev, threaded=True)
