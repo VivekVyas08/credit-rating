@@ -35,7 +35,7 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
-LIBS = ["Report for Reference", "CRISIL/Report for Reference", "CareEdge/Report for Reference"]
+LIBS = ["ICRA/Report for Reference", "CRISIL/Report for Reference", "CareEdge/Report for Reference"]
 
 STOP = {"limited", "ltd", "the", "and", "of", "india", "private", "company", "co"}
 

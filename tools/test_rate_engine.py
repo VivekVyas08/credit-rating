@@ -628,6 +628,29 @@ def test_model_download_check():
           "a URL override with its own hash uses it (trimmed, lower-cased)")
 
 
+def test_skills_context_paths():
+    """--with-skills must hand every agency its own criteria file, for corporates and financials.
+
+    Regression: the ICRA files moved into ICRA/ on 02-Oct-2026 but this lookup kept the old root
+    paths, so ICRA cases silently got the craft rules and no criteria at all."""
+    import re
+    print("\n[17] paths after the ICRA/ folder move: --with-skills criteria, Step-14 libraries")
+    for agency, sector, want in [("ICRA", "Cement", "ICRA/ICRA_CONVENTIONS.md"),
+                                 ("ICRA", "Banks", "ICRA/ICRA_BANKS_NBFC_CONVENTIONS.md"),
+                                 ("CRISIL", "Cement", "CRISIL/CRISIL_CONVENTIONS.md"),
+                                 ("CRISIL", "NBFC", "CRISIL/CRISIL_BANKS_NBFC_CONVENTIONS.md"),
+                                 ("CareEdge", "Cement", "CareEdge/CORPORATE_CONVENTIONS.md"),
+                                 ("CareEdge", "Banks", "CareEdge/BROKING_CONVENTIONS.md")]:
+        m = re.search(r"AGENCY CRITERIA - (\S+)",
+                      RE._skills_context({"agency": agency, "sector": sector}))
+        check(m is not None and m.group(1) == want,
+              "%s %s -> %s" % (agency, sector, m.group(1) if m else "NO CRITERIA"))
+    import step14_diff
+    libs = set(step14_diff.LIBS) | set(step14_diff.AGENCY_LIB.values())
+    missing = sorted(p for p in libs if not (RE.ROOT / p).is_dir())
+    check(not missing, "every Step-14 reference library path exists (missing: %s)" % (missing or "none"))
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -641,7 +664,7 @@ def main():
                test_ui_model_pref,
                test_ollama_success, test_ollama_request_shape, test_ollama_errors,
                test_sdk_credential_detection, test_offline_output_guards,
-               test_trends_and_sync, test_model_download_check):
+               test_trends_and_sync, test_model_download_check, test_skills_context_paths):
         fn()
     print("\n" + "=" * 78)
     if _failures:

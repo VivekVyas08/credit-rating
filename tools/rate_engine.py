@@ -1018,8 +1018,10 @@ def _skills_context(meta, max_chars=2500):
         cand = (["CRISIL/CRISIL_BANKS_NBFC_CONVENTIONS.md"] if is_fin
                 else ["CRISIL/CRISIL_CONVENTIONS.md"]) + ["CRISIL/CRISIL_CONVENTIONS.md"]
     elif agency == "ICRA":
-        cand = (["ICRA_BANKS_NBFC_CONVENTIONS.md"] if is_fin else ["ICRA_CONVENTIONS.md"]) \
-            + ["ICRA_CONVENTIONS.md"]
+        # under ICRA/ since the 02-Oct-2026 folder move; the old root paths silently matched
+        # nothing, so ICRA cases got the craft rules but no criteria until 10-Oct-2026
+        cand = (["ICRA/ICRA_BANKS_NBFC_CONVENTIONS.md"] if is_fin
+                else ["ICRA/ICRA_CONVENTIONS.md"]) + ["ICRA/ICRA_CONVENTIONS.md"]
     elif agency in ("CAREEDGE", "CARE", "CARE EDGE"):
         cand = (["CareEdge/BROKING_CONVENTIONS.md"] if is_fin
                 else ["CareEdge/CORPORATE_CONVENTIONS.md"])
