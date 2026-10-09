@@ -5,8 +5,9 @@ models/
 **/*.pyc
 *.part
 .venv/
-# Local-only files: never baked into an image someone might push or share.
-.claude/
+# Local-only files: never baked into an image someone might push or share. (.claude/ itself is
+# project content - skills the offline engines read - so only its per-machine settings stay out.)
+.claude/settings.local.json
 .env*
 **/*.log
 webapp/ui_prefs.json
