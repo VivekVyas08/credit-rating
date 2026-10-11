@@ -658,6 +658,9 @@ def _resolve_gguf(model=None):
     # Ollama store so the tool works even if Ollama is uninstalled.
     local_dir = ROOT / "models"
     if local_dir.is_dir():
+        tuned = sorted(local_dir.glob("*finetuned*.gguf"))      # tools/export_gguf.py output wins
+        if tuned:
+            return str(tuned[0])
         ggufs = sorted(local_dir.glob("*.gguf"))
         if ggufs:
             return str(ggufs[0])

@@ -709,6 +709,28 @@ def test_model_setup_messages():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def test_finetuned_gguf_preferred():
+    """A models/*finetuned*.gguf (the export_gguf.py output) wins over any other local GGUF."""
+    import os
+    import tempfile
+    print("\n[+] fine-tuned GGUF is preferred")
+    old_root, old_env = RE.ROOT, os.environ.pop("CREDITRATING_GGUF", None)
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "models").mkdir()
+            RE.ROOT = root
+            (root / "models" / "aaa-base.gguf").write_bytes(b"x")
+            check(RE._resolve_gguf().endswith("aaa-base.gguf"), "only a base model -> the base model")
+            (root / "models" / "zzz-finetuned.gguf").write_bytes(b"x")
+            check(RE._resolve_gguf().endswith("zzz-finetuned.gguf"),
+                  "a *finetuned*.gguf beats an alphabetically earlier base model")
+    finally:
+        RE.ROOT = old_root
+        if old_env is not None:
+            os.environ["CREDITRATING_GGUF"] = old_env
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -723,7 +745,7 @@ def main():
                test_ollama_success, test_ollama_request_shape, test_ollama_errors,
                test_sdk_credential_detection, test_offline_output_guards,
                test_trends_and_sync, test_model_download_check, test_skills_context_paths,
-               test_model_setup_messages):
+               test_model_setup_messages, test_finetuned_gguf_preferred):
         fn()
     print("\n" + "=" * 78)
     if _failures:

@@ -10,7 +10,7 @@ mechanical delivery checks, and two ways to get a rating view: **Online** (Claud
 
 **Contents:** [How it works](#how-it-works) · [Start it](#start-it) ·
 [First start on a new machine](#first-start-on-a-new-machine) · [How to use it](#how-to-use-it) ·
-[Online and Offline](#online-and-offline) · [Command line](#command-line) ·
+[Online and Offline](#online-and-offline) · [Fine-tune the offline model](#fine-tune-the-offline-model-optional) · [Command line](#command-line) ·
 [What is in this repository](#what-is-in-this-repository) · [Security](#security) ·
 [Troubleshooting](#troubleshooting)
 
@@ -212,6 +212,35 @@ unverified figure is printed with the result.
 
 ---
 
+## Fine-tune the offline model (optional)
+
+The offline model can be fine-tuned on this project's own delivered cases, so that its rating
+views follow the house style more closely. Three scripts, run in order:
+
+```bash
+python tools/build_finetune_data.py     # delivered cases -> finetune/train.jsonl
+python tools/finetune.py --max-steps 50 # QLoRA on ibm-granite/granite-4.1-8b -> models/granite-4.1-8b-lora/
+python tools/export_gguf.py             # merge, convert, quantise -> models/granite-4.1-8b-finetuned.gguf
+```
+
+| | |
+|---|---|
+| **Training data** | Built from the case folders in `Companies/`: the exact prompt `rate_engine.py` sends, paired with the grade, outlook, strengths and weaknesses parsed from the delivered rationale. 33 cases, each used in 4 variants (strength order shuffled, confidence varied), so **132 samples from 33 distinct prompts**. `finetune/train.jsonl` is rebuilt by the first command and is not stored in the repository. |
+| **Hardware** | An NVIDIA GPU with 12 GB or more of memory (16-24 GB recommended). Install `pip install torch transformers peft accelerate bitsandbytes` (and optionally `unsloth`). CPU-only runs are only practical for tiny models. |
+| **Base model** | `ibm-granite/granite-4.1-8b`, public and Apache-2.0, the model the built-in GGUF was made from. No account or token is needed. |
+| **Sample length** | `--max-len 6144` tokens by default. Granite's tokenizer puts 21% of the samples over 4096 tokens and 6% over 6144; `--max-len 8192` keeps all of them but needs about 24 GB. |
+| **What is trained** | The loss is computed on the model's answer only, not on the prompt. |
+| **Export** | `export_gguf.py` needs `git`, CMake and about 30 GB of free disk, because it clones and builds llama.cpp. The engine automatically prefers any `models/*finetuned*.gguf` over the base file. |
+
+**Status, so nobody is misled:** the training script was smoke-tested end to end on a tiny model
+(SmolLM2-135M) and the merge step was tested the same way, and Granite's chat template and
+token lengths were checked against the real tokenizer. The 8B training run and the GGUF
+conversion have **not** been run, and the fine-tuned model has **not** been evaluated. With 33
+distinct cases the gain is unproven; compare it with the base model on companies it was not
+trained on before relying on it.
+
+---
+
 ## Command line
 
 ```bash
@@ -244,7 +273,7 @@ Figures still come only from the verified ratio suite.
 | Folder | Contents |
 |---|---|
 | `webapp/` | The web app |
-| `tools/` | Ratio and rating engines, the checks, and their tests |
+| `tools/` | Ratio and rating engines, the checks, their tests, and the [fine-tuning scripts](#fine-tune-the-offline-model-optional) |
 | `ICRA/`, `CRISIL/`, `CareEdge/` | Each agency's `Methodology/`, `Report for Reference/` and conventions notes (Markdown) |
 | `Knowledge Base/` | Shared routing maps, report templates and procedure notes |
 | `Companies/` | One folder per case: documents (Markdown), ratio engine, workpaper, rationale, workbooks |
