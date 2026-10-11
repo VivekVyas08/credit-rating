@@ -68,6 +68,8 @@
 /Docs/corpus_review/merged/
 /Docs/corpus_review/tmp_findings_icra/
 /Docs/corpus_review/tmp_findings_ce1/
+# LinkedIn demo video script/assets: personal, kept out of the repo on request (11-Oct-2026)
+/Docs/LinkedIn_Video/
 
 # --- within the tracked trees, still drop caches, machine-local prefs, logs and secrets ---
 __pycache__/
