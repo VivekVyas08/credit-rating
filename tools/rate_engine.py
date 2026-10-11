@@ -695,6 +695,8 @@ MODEL_SHA256 = (os.environ.get("CREDITRATING_GGUF_SHA256")
                 or ("" if "CREDITRATING_GGUF_URL" in os.environ
                     else "ed902ac9eb6adce5a90c6a08c8ea201b50e23fdc5976d1cd0362006afac5309e")
                 ).strip().lower()
+_REFUSED = ("CREDITRATING_GGUF_URL is set without CREDITRATING_GGUF_SHA256 - "
+            "an unverifiable download was refused")
 
 
 def _sha256_of(path):
@@ -792,8 +794,7 @@ def ensure_model(model=None, verbose=True, progress=None):
             return g
     # nothing on disk: DOWNLOAD it automatically (no Ollama required)
     if MODEL_URL and not MODEL_SHA256:
-        MODEL_STATE["detail"] = ("CREDITRATING_GGUF_URL is set without CREDITRATING_GGUF_SHA256 - "
-                                 "an unverifiable download was refused")
+        MODEL_STATE["detail"] = _REFUSED
         if verbose:
             print("[model] %s" % MODEL_STATE["detail"])
     elif MODEL_URL:
@@ -837,16 +838,34 @@ def model_ready():
     return bool(_resolve_gguf())
 
 
-def start_model_setup():
-    """Download the offline model in a BACKGROUND thread if it is missing; return immediately.
-    Safe to call repeatedly - a download already running is left alone."""
+def start_model_setup(verbose=False):
+    """Fetch the offline model in a BACKGROUND thread if it is missing; return immediately.
+    Safe to call repeatedly - a download already running is left alone. With verbose, the console
+    says what will happen and, when the thread ends, how it went."""
+    import shutil
     import threading
     if model_ready():
         MODEL_STATE.update(status="ready", detail="")
         return
     if MODEL_STATE["status"] == "downloading":
         return
+    # Decided up front, so the console never announces a download that is not going to happen
+    # (it used to say "downloading" even when the download was refused a moment later).
+    if MODEL_URL and MODEL_SHA256:
+        how = "downloading it in the background (~5 GB, checked against its SHA-256)"
+    elif shutil.which("ollama"):
+        how = "pulling it through Ollama in the background"
+    else:
+        MODEL_STATE.update(status="failed", done=0, total=0,
+                           detail=_REFUSED if MODEL_URL else
+                           "no model download is configured and Ollama is not installed")
+        if verbose:
+            print("[model] offline model not found and not fetched: %s. Online mode still works."
+                  % MODEL_STATE["detail"])
+        return
     MODEL_STATE.update(status="downloading", done=0, total=0, detail="")
+    if verbose:
+        print("[model] offline model not found - %s; progress is shown in the tool" % how)
 
     def work():
         try:
@@ -859,6 +878,10 @@ def start_model_setup():
                                    detail=MODEL_STATE["detail"] or "could not download the model")
         except Exception as e:                                             # noqa: BLE001
             MODEL_STATE.update(status="failed", detail=str(e))
+        if verbose:
+            print("[model] offline model ready" if MODEL_STATE["status"] == "ready" else
+                  "[model] offline model not available: %s. Online mode still works."
+                  % MODEL_STATE["detail"])
     threading.Thread(target=work, daemon=True).start()
 
 
@@ -914,10 +937,7 @@ def provision(verbose=True, sync=True):
             print("[sync] %s: %s" % (st["status"], st["detail"]))
     else:
         SYNC_STATE.update(status="skipped", detail="switched off (RATING_NO_SYNC=1)")
-    start_model_setup()
-    if verbose and MODEL_STATE["status"] == "downloading":
-        print("[model] offline model not found - downloading in the background (~5 GB); "
-              "progress is shown in the tool")
+    start_model_setup(verbose=verbose)
 
 
 def _embedded_schema():

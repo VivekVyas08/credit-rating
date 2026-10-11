@@ -52,6 +52,32 @@ GRADE_RE = re.compile(
     r"(?:\[ICRA\]|Crisil\s+|CARE\s+)"
     r"(AAA|AA[+-]|AA|A1\+|A1|A2\+|A2|A3\+|A3|A4\+|A4"
     r"|A[+-]|A|BBB[+-]|BBB|BB[+-]|BB|B[+-]|B|C|D)(?![A-Za-z0-9+-])")
+_ST = {"A1+", "A1", "A2+", "A2", "A3+", "A3", "A4+", "A4"}
+
+
+# The rationale's LONG-TERM and SHORT-TERM grades are read SEPARATELY - the first of each. Taking
+# just the first grade in the file compared whichever row the Summary-of-rating-action table
+# happened to lead with, and ICRA's own ordering puts commercial paper FIRST. Ashok Leyland,
+# 10-Oct-2026: the run printed "assigned A1+ vs rationale A1+ -> MATCHES" off the CP row, and the
+# long-term [ICRA]AA+ (Stable) was never compared - so a long-term mismatch passed silently.
+def split_grades(text):
+    """(long-term grade, short-term grade): the first of each in `text`; either may be None."""
+    lt = st = None
+    for m in GRADE_RE.finditer(text or ""):
+        if m.group(1) in _ST:
+            st = st or m.group(1)
+        else:
+            lt = lt or m.group(1)
+    return lt, st
+
+
+def _quote(head, m):
+    """The rating as written at match m: grade, Watch '&', and outlook in each agency's form -
+    "[ICRA]AA+ (Stable)", "Crisil AA+/Stable", "CARE AA; Stable". Nothing else, so a combined
+    cell "[ICRA]AA+ (Stable)/[ICRA]A1+" or a headline "... A1+ reaffirmed" quotes cleanly."""
+    tail = re.match(r"&?(?:\s*\((?:Stable|Positive|Negative|Developing)\)"
+                    r"|\s*[/;]\s*(?:Stable|Positive|Negative|Developing))?", head[m.end():])
+    return m.group(0) + tail.group(0)
 
 
 
@@ -77,10 +103,13 @@ def rationale_for(slug: str, agency: str = None):
     gate uses, so a case registered under a short name still finds its report.
     """
     import check_sections as CS
-    cand = sorted((ROOT / "Companies" / slug).glob("*Rating Rationale*.md"))
+    # A superseded report is not the rationale. The glob also matches "..._SUPERSEDED.md", and
+    # Dhampur's 04-Sep copy (BBB+; Stable) sorted ahead of the live 13-Sep one (BBB+; Positive).
+    cand = sorted(f for f in (ROOT / "Companies" / slug).glob("*Rating Rationale*.md")
+                  if not _superseded(f))
     for f in sorted(ROOT.glob("*Rating Rationale*.md")):
         d = CS.resolve_case_dir(f)
-        if d is not None and d.name == slug:
+        if d is not None and d.name == slug and not _superseded(f):
             cand.append(f)
 
     # A case can hold rationales from more than one agency - JSW Steel has both an ICRA and a
@@ -109,13 +138,13 @@ def rationale_for(slug: str, agency: str = None):
         # and a date line, so the first grade on IIFL sits at character 624. The first grade
         # in that table is the primary long-term facility, which is the one to quote.
         head = f.read_text(encoding="utf-8", errors="replace")[:1200]
-        m = GRADE_RE.search(head)
-        if m:
-            # Return the full rating string as written, not just the grade token.
-            line = next((l for l in head.splitlines() if m.group(0) in l), m.group(0))
-            full = re.search(r"((?:\[ICRA\]|Crisil\s+|CARE\s+)" + re.escape(m.group(1))
-                             + r"[^,;|*]{0,18})", line)
-            return (full.group(1).strip() if full else m.group(0)), f.name
+        # Long-term first, then short-term, each quoted as written. A short-term-only mandate
+        # (ITC's CP programmes, Solar) yields the ST quote alone, exactly as before.
+        quotes = [_quote(head, m) for m in (
+            next((m for m in GRADE_RE.finditer(head) if (m.group(1) in _ST) == st), None)
+            for st in (False, True)) if m]
+        if quotes:
+            return " / ".join(quotes), f.name
     return None, None
 
 
@@ -249,20 +278,22 @@ def annotate(book: Path, proposed: str, ref: str) -> str:
     divergence = vs["C34"].value
     caps = vs["C14"].value
 
-    want = GRADE_RE.search(proposed or "")
-    want_grade = want.group(1) if want else None
-    # Short-term-only mandates (ITC: a single CP programme rated [ICRA]A1+, no long-term grade
-    # in the rationale at all) must be compared against the sheet's SHORT-TERM grade.
-    _ST = {"A1+", "A1", "A2+", "A2", "A3+", "A3", "A4+", "A4"}
-    if want_grade in _ST:
-        got_grade = str(vs["C33"].value or "").strip() or None
-    else:
-        got_grade = str(assigned_grade).strip() if assigned_grade is not None else None
-    agree = bool(want_grade) and want_grade == got_grade
+    # Long-term against C32 whenever the rationale carries one; short-term against C33 whenever
+    # it carries one. Short-term-only mandates (ITC: a single CP programme rated [ICRA]A1+, no
+    # long-term grade in the rationale at all) therefore compare the ST grade alone, as before.
+    want_lt, want_st = split_grades(proposed)
+    got_lt = str(assigned_grade).strip() if assigned_grade is not None else None
+    got_st = str(vs["C33"].value or "").strip() or None
+    pairs = [(w, g) for w, g in ((want_lt, got_lt), (want_st, got_st)) if w]
+    agree = bool(pairs) and all(w == g for w, g in pairs)
+    want_grade = "/".join(w for w, _ in pairs) or None
+    got_grade = "/".join(str(g) for _, g in pairs) or None
+    shown = " / ".join(str(v) for v, w in ((assigned_line, want_lt), (vs["C37"].value, want_st))
+                       if w) or assigned_line
 
     rows = [
         ("RECONCILIATION - this workbook against the rationale", ""),
-        ("Assigned rating on this sheet (Stage 3, cell C36)", assigned_line),
+        ("Assigned rating on this sheet (Stage 3, cells C36 / C37)", shown),
         ("Rating stated in the rationale", proposed),
         ("Do they agree?", "YES" if agree else "NO - RESOLVE BEFORE DELIVERY"),
         ("", ""),

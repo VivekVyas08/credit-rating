@@ -1828,12 +1828,12 @@ def audit(path: Path):
     # place for it. A document that can be opened on its own has to explain itself on its own.
     #   Fix:  python annotate_scorecard.py --all
     if case_dir is not None:
-        import re as _re
-        _grade = _re.compile(r"(?:\[ICRA\]|Crisil\s+|CARE\s+)"
-                             r"(AAA|AA[+-]|AA|A[+-]|A|BBB[+-]|BBB|BB[+-]|BB|B[+-]|B|C)"
-                             r"(?![A-Za-z0-9+-])")
-        _m = _grade.search(t[:1200])
-        rationale_grade = _m.group(1) if _m else None
+        # The long-term and short-term grades are read separately, by the SAME selector
+        # annotate_scorecard.py uses. This probe had its own regex with no short-term grades: it
+        # skipped a leading CP row (good) but found nothing at all in a CP-only rationale, so
+        # ITC's ICRA/CareEdge and Solar were never compared. Unified 10-Oct-2026.
+        import annotate_scorecard as _AS
+        want_lt, want_st = _AS.split_grades(t[:1200])
         for book in sorted(case_dir.glob("Rating_Scorecard*.xlsx")):
             try:
                 from openpyxl import load_workbook
@@ -1861,21 +1861,21 @@ def audit(path: Path):
                         f"cached values were never written. Run: "
                         f"python tools/restructure_scorecard.py, refill, then "
                         f"python tools/annotate_scorecard.py --all"))
-                elif rationale_grade:
-                    # An issuer rated on the SHORT-TERM scale alone (ITC's ICRA and CareEdge
-                    # mandates are each a single commercial-paper programme, "[ICRA]A1+", with
-                    # no long-term grade anywhere) must be compared against the sheet's
-                    # short-term grade. Comparing a CP rating to a long-term grade reports a
-                    # mismatch that is an artefact of the comparison, not of the workbook.
-                    _ST = {"A1+", "A1", "A2+", "A2", "A3+", "A3", "A4+", "A4"}
-                    if rationale_grade in _ST:
-                        got = str(ws["C33"].value or "").strip()
-                    else:
-                        got = str(assigned_grade).strip()
+                elif want_lt or want_st:
+                    # LT against C32 whenever the report carries one, ST against C33 whenever
+                    # it does. An issuer rated on the SHORT-TERM scale alone (ITC's ICRA and
+                    # CareEdge CP programmes, "[ICRA]A1+") is compared on C33 alone - a CP
+                    # rating set against a long-term grade is an artefact, not a mismatch.
+                    pairs = [(w, g) for w, g in ((want_lt, str(assigned_grade).strip()),
+                                                 (want_st, str(ws["C33"].value or "").strip()))
+                             if w]
+                    got = "/".join(g for _, g in pairs)
+                    rationale_grade = "/".join(w for w, _ in pairs)
                     if got != rationale_grade:
                         probes_failed.append((
                             "Scorecard assigned rating equals the rationale",
-                            f"{book.name} Stage 3 assigns '{assigned_line}' (grade {got}) but "
+                            f"{book.name} Stage 3 assigns '{assigned_line}' / "
+                            f"'{ws['C37'].value}' (grade {got}) but "
                             f"this report's headline grade is '{rationale_grade}'. These are "
                             f"the SAME decision and must not differ. Either the Stage 2 "
                             f"overlay on the Inputs sheet does not bridge the anchor to the "

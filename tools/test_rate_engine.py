@@ -651,6 +651,64 @@ def test_skills_context_paths():
     check(not missing, "every Step-14 reference library path exists (missing: %s)" % (missing or "none"))
 
 
+def test_model_setup_messages():
+    """What the console says about the offline model must match what actually happens.
+
+    Regression: with a download refused (URL override without a hash), startup still printed
+    "downloading in the background". Small file:// downloads in a temp root - no network."""
+    import contextlib
+    import hashlib
+    import io
+    import shutil
+    import tempfile
+    import time
+    print("\n[18] model setup: the console says what really happens")
+    tmp = Path(tempfile.mkdtemp())
+    saved = (RE.ROOT, RE.MODEL_URL, RE.MODEL_SHA256, RE._resolve_gguf, RE.model_ready,
+             dict(RE.MODEL_STATE))
+    real_which = shutil.which
+    src = tmp / "m.gguf"
+    src.write_bytes(b"GGUF" + bytes(range(256)) * 512)
+
+    def setup(url, sha):
+        RE.ROOT = tmp / ("proj-%d" % time.monotonic_ns())
+        RE.MODEL_URL, RE.MODEL_SHA256 = url, sha
+        RE.MODEL_STATE.update(status="unknown", done=0, total=0, detail="")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            RE.start_model_setup(verbose=True)
+            for _ in range(200):                      # the background thread, if any, finishes
+                if RE.MODEL_STATE["status"] != "downloading":
+                    break
+                time.sleep(0.05)
+        return out.getvalue(), dict(RE.MODEL_STATE)
+
+    try:
+        RE._resolve_gguf, RE.model_ready = (lambda model=None: None), (lambda: False)
+        shutil.which = lambda name: None                       # no Ollama fallback
+        text, st = setup("https://example.invalid/x.gguf", "")
+        check("downloading" not in text and "not fetched" in text and "refused" in text
+              and st["status"] == "failed",
+              "refused: says 'not fetched' and why - never 'downloading'")
+        text, st = setup("", "")
+        check("downloading" not in text and "no model download is configured" in text
+              and st["status"] == "failed", "nothing configured: says so")
+        good = hashlib.sha256(src.read_bytes()).hexdigest()
+        text, st = setup(src.as_uri(), good)
+        check("downloading it in the background" in text and "offline model ready" in text
+              and st["status"] == "ready", "a real download: announced, then reported ready")
+        text, st = setup(src.as_uri(), "0" * 64)
+        check("not available" in text and "mismatch" in text and st["status"] == "failed",
+              "a checksum mismatch is reported in the console, not only on the setup screen")
+    finally:
+        (RE.ROOT, RE.MODEL_URL, RE.MODEL_SHA256, RE._resolve_gguf, RE.model_ready,
+         state) = saved
+        RE.MODEL_STATE.clear()
+        RE.MODEL_STATE.update(state)
+        shutil.which = real_which
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -664,7 +722,8 @@ def main():
                test_ui_model_pref,
                test_ollama_success, test_ollama_request_shape, test_ollama_errors,
                test_sdk_credential_detection, test_offline_output_guards,
-               test_trends_and_sync, test_model_download_check, test_skills_context_paths):
+               test_trends_and_sync, test_model_download_check, test_skills_context_paths,
+               test_model_setup_messages):
         fn()
     print("\n" + "=" * 78)
     if _failures:

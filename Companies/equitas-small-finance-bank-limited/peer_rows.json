@@ -1,0 +1,18 @@
+{
+  "agency": "CareEdge",
+  "sector": "bank / sfb / rrb",
+  "peer": "Au Small Finance Bank Limited_01 Dec 2025.md",
+  "required_rows": [
+    "Total income",
+    "Profit after tax (PAT)",
+    "Total assets",
+    "Net interest margin (NIM) (%)",
+    "ROTA (%)",
+    "Gross non-performing assets (NPA) (%)",
+    "Net non-performing assets (NPA) (%)",
+    "Capital adequacy ratio (CAR) (%)"
+  ],
+  "peers_sampled": 9,
+  "peers_with_long_term_rating": 7,
+  "peers_with_short_term_rating": 3
+}

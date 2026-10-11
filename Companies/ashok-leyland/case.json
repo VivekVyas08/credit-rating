@@ -1,0 +1,17 @@
+{
+  "name": "Ashok Leyland",
+  "agency": "ICRA",
+  "sector": "Corporate (no specific sector methodology)",
+  "entity_type": "corporate",
+  "basis": "consolidated",
+  "created": "2026-10-10T11:47:35",
+  "aliases": [
+    "AL"
+  ],
+  "methodologies": [
+    "960~Corporate Credit Rating Methodology, Jul 2025.md",
+    "1006~Commercial Vehicles, Rating Methodology, Dec 2025.md"
+  ],
+  "isins": [],
+  "step12_scaling_decision": "Corporate 5-yr 3-statement model built in full (equity-research Task 2 format: Revenue Model, Income Statement, Cash Flow, Balance Sheet, Scenarios incl. rating stress + FY2019-21 tail, DCF Inputs, plus Credit Ratios [formulas] and Debt Breakup). Tasks 1, 3 and 4 scaled to the rating's needs per CLAUDE.md proportionality: credit-focused research note (not a 6-8k-word initiation), DCF + market cushion valuation note for financial flexibility only (no comps/precedents/price target), 8 charts including the plugin's 4 mandatory ones. Task 5 not run (the rationale is the deliverable). Precedent: HLE Glascoat, Happy Forgings."
+}

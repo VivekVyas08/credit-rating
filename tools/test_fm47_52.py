@@ -223,6 +223,59 @@ print(f"[{'OK' if r is not None else 'FAIL'}] LT-ST: a genuine bank is still map
       f"Banks row -> {r!r}")
 results.append(r is not None)
 
+# ---- Scorecard-vs-rationale: the LONG-TERM grade is compared even when CP leads the table ----
+# Found 10-Oct-2026 on Ashok Leyland: ICRA's Summary-of-rating-action table lists commercial paper
+# first, annotate_scorecard.py took the FIRST grade ([ICRA]A1+) and printed "assigned A1+ vs
+# rationale A1+ -> MATCHES" - the long-term [ICRA]AA+ (Stable) was never compared.
+import annotate_scorecard as AS
+
+cp_first = ("| Commercial paper | 2,000.00 | [ICRA]A1+; reaffirmed |\n"
+            "| Non-convertible debenture | 200.00 | [ICRA]AA+ (Stable); reaffirmed |\n")
+for label, text, want in (
+        ("CP-first table -> LT and ST both read", cp_first, ("AA+", "A1+")),
+        ("CP-only mandate -> ST alone, as before", "| Commercial paper | [ICRA]A1+ |", (None, "A1+")),
+        ("A1 is not read as A1+", "[ICRA]A- (Stable)/[ICRA]A1; assigned", ("A-", "A1"))):
+    got = AS.split_grades(text)
+    print(f"[{'OK' if got == want else 'FAIL'}] split_grades: {label} -> {got!r}")
+    results.append(got == want)
+
+# Positive control on the real case: force Stage 3 to AA (overlay Inputs!C63 = 0), recalculate,
+# and both annotate_scorecard.py and the check_sections.py probe must report the mismatch against
+# the AA+ rationale; the untouched workbook must still MATCH.
+import shutil
+import tempfile
+import recalc_workbook
+from openpyxl import load_workbook
+
+case = Path(__file__).resolve().parent.parent / "Companies" / "ashok-leyland"
+books = sorted(case.glob("Rating_Scorecard*.xlsx"))
+rats = sorted(case.glob("*Rating Rationale*.md"))
+if not (books and rats):
+    print("[SKIP] Ashok Leyland scorecard control - case folder not present")
+else:
+    proposed, _src = AS.rationale_for("ashok-leyland", "ICRA")
+    PROBE = "Scorecard assigned rating equals the rationale"
+    with tempfile.TemporaryDirectory() as tmp:
+        for forced in (False, True):
+            d = Path(tmp) / ("forced" if forced else "real") / "ashok-leyland"
+            d.mkdir(parents=True)
+            for f in (books[0], rats[0], case / "case.json"):
+                shutil.copy(f, d)
+            book = d / books[0].name
+            if forced:
+                wb = load_workbook(book)
+                wb["Inputs"]["C63"] = 0
+                wb.save(book)
+                recalc_workbook.recalc(book)
+            # the probe reads cached values, so it runs before annotate() re-saves the book
+            fired = any(p[0] == PROBE for p in cs.audit(d / rats[0].name)[2])
+            msg = AS.annotate(book, proposed, "test")
+            ok = (fired == forced) and (("MISMATCH" in msg) == forced) and \
+                 ("AA+/A1+" in msg if not forced else "assigned AA/A1+" in msg)
+            print(f"[{'OK' if ok else 'FAIL'}] Ashok Leyland {'forced to AA' if forced else 'as delivered'}"
+                  f" -> probe fired={fired} | {msg.split(' | ')[0]}")
+            results.append(ok)
+
 print()
 n_fail = sum(1 for r in results if not r)
 print(f"{len(results) - n_fail}/{len(results)} controls passed" +

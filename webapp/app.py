@@ -993,6 +993,19 @@ PAGE = """<!doctype html>
         --accent:#3ab6c2; --accent-ink:#8fd8df; --decide:#123642;
         --ok:#57c07a; --warn:#e0a54a;
         --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-hov:0 20px 44px -22px rgba(0,0,0,.6); } }
+:root[data-theme="dark"]{
+        --bg:#0f1729; --panel2:#16213a; --card:#172137; --line:#28344f;
+        --ink:#e7ecf5; --mut:#9aa8c4; --faint:#6b7a99; --edge:#5f6f8f;
+        --navy:#e7ecf5; --navy2:#e7ecf5; --teal:#3ab6c2; --teal2:#4fc9d4;
+        --accent:#3ab6c2; --accent-ink:#8fd8df; --decide:#123642;
+        --ok:#57c07a; --warn:#e0a54a;
+        --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-hov:0 20px 44px -22px rgba(0,0,0,.6); }
+.themsw { display:flex; align-items:center; gap:0; background:rgba(0,0,0,.22);
+          border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:2px; }
+.themsw button { font:inherit; font-size:12.5px; font-weight:600; color:#c3d0ea; background:transparent;
+          border:0; border-radius:6px; padding:5px 10px; cursor:pointer; transition:background .15s,color .15s; }
+.themsw button:hover { color:#fff; }
+.themsw button.on { background:rgba(255,255,255,.18); color:#fff; }
 * { box-sizing:border-box; margin:0; }
 html { scroll-behavior:smooth; }
 body { font:15px/1.6 var(--sans); background:var(--bg); color:var(--ink);
@@ -1032,7 +1045,7 @@ th,td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line);
 th { color:var(--mut); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.5px;
      border-bottom:2px solid var(--line); }
 tbody tr { transition:background .12s; }
-tbody tr:hover { background:#f7f9fc; }
+tbody tr:hover { background:var(--panel2); color:var(--ink); }
 .btn { display:inline-flex; align-items:center; gap:6px; background:var(--accent); color:#fff; border:0;
        border-radius:8px; padding:8px 16px; font-size:13.5px; font-weight:500; cursor:pointer;
        box-shadow:0 1px 2px rgba(14,124,134,.24); transition:filter .12s,box-shadow .12s,transform .05s; }
@@ -1046,7 +1059,7 @@ tbody tr:hover { background:#f7f9fc; }
 label.field-label { display:block; font-size:12px; font-weight:600; color:var(--mut);
        text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
 input[type=text], input[type=password], select { border:1px solid var(--line); border-radius:8px; padding:8px 11px;
-       font-size:14px; width:100%; background:#fff; transition:border-color .12s,box-shadow .12s; }
+       font-size:14px; width:100%; background:#fff; color:#1F2733; transition:border-color .12s,box-shadow .12s; }
 input[type=text]:focus, input[type=password]:focus, select:focus { outline:none; border-color:var(--teal2);
        box-shadow:0 0 0 3px rgba(18,160,172,.18); }
 input[type=file] { font-size:13px; max-width:230px; }
@@ -1055,14 +1068,20 @@ input[type=file] { font-size:13px; max-width:230px; }
 .badge { display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:3px 10px; border-radius:99px;
          font-weight:700; letter-spacing:.3px; }
 .badge.req { background:#fdece0; color:var(--warn); }
-.badge.opt { background:#e8edf4; color:var(--mut); }
+.badge.opt { background:#e8edf4; color:#5b6578; }
 .badge.done { background:#e2f3e6; color:var(--ok); }
+/* ticked methodology rows: light-green highlight needs dark text in BOTH themes (the dark theme's
+   light --ink on this background was unreadable); :has() follows the checkbox live, before saving */
+label.methrow:has(input:checked) { background:#e2f3e6; color:#14532d; font-weight:500; }
+label.methrow:has(input:checked) .badge.opt { background:#cfe9d6; color:#14532d; }
 .progress { height:9px; background:#e8edf4; border-radius:99px; overflow:hidden; margin:8px 0 2px; }
 .progress i { display:block; height:100%; background:linear-gradient(90deg,var(--teal),var(--teal2)); transition:width .3s; }
 .flash { background:#e2f3e6; border:1px solid #bfe3c8; color:#14532d; padding:10px 15px;
          border-radius:9px; margin-top:12px; font-size:14px; box-shadow:var(--shadow); }
+:root[data-theme="dark"] .flash { background:#123326; border-color:#1f5a3c; color:#9be0b4; }
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .flash { background:#123326; border-color:#1f5a3c; color:#9be0b4; } }
 textarea.prompt { width:100%; min-height:150px; font:12.5px/1.5 Consolas,monospace;
-         border:1px solid var(--line); border-radius:9px; padding:11px; background:#fbfcfe; }
+         border:1px solid var(--line); border-radius:9px; padding:11px; background:#fbfcfe; color:#1F2733; }
 .rowform { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
 .rowform > * { flex:1 1 140px; } .rowform .btn { flex:0 0 auto; }
 /* settings page */
@@ -1101,7 +1120,7 @@ pre.cmd { background:#1b2a4a; color:#dfe8f7; padding:11px 14px; border-radius:8p
 .agency-card:hover { box-shadow:var(--shadow-hov); transform:translateY(-2px); border-color:var(--teal2);
        text-decoration:none; }
 .agency-card h2 { color:var(--navy); font-size:21px; }
-.reqbox { background:#fef8ec; border:1px solid #f0dcb0; border-radius:9px;
+.reqbox { background:#fef8ec; border:1px solid #f0dcb0; border-radius:9px; color:#5c3d02;
        padding:11px 15px; margin-top:10px; font-size:13.5px; }
 .md { font-size:14.5px; }
 .md h1,.md h2,.md h3 { margin:18px 0 8px; color:var(--navy); }
@@ -1114,7 +1133,9 @@ pre.cmd { background:#1b2a4a; color:#dfe8f7; padding:11px 14px; border-radius:8p
   .card { padding:15px; }
   .rowform > * { flex-basis:100%; }
 }
-</style></head><body>
+</style>
+<script nonce="{{ nonce }}">(function(){try{var t=localStorage.getItem('ra-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+</head><body>
 <header>
   <span class="brand"><a href="{{ url_for('agency_picker') }}"><span class="mark">RA</span>Rating Agent</a></span>
   <nav>
@@ -1130,6 +1151,10 @@ pre.cmd { background:#1b2a4a; color:#dfe8f7; padding:11px 14px; border-radius:8p
   </form>
   {% if session.get('auth') %}<form method="post" action="{{ url_for('logout') }}">
     <button class="btn small ghost" type="submit" style="color:#c3d0ea;border-color:rgba(255,255,255,.25)">Sign out</button></form>{% endif %}
+  <div class="themsw" id="themsw" title="Toggle light / dark theme">
+    <button type="button" id="btn-light" data-action="theme-light" aria-label="Light mode">&#9728; Light</button>
+    <button type="button" id="btn-dark" data-action="theme-dark" aria-label="Dark mode">&#9790; Dark</button>
+  </div>
   <span class="sub">ICRA &middot; CRISIL &middot; CareEdge</span>
 </header>
 <main>
@@ -1137,6 +1162,17 @@ pre.cmd { background:#1b2a4a; color:#dfe8f7; padding:11px 14px; border-radius:8p
 {{ body|safe }}
 </main>
 <script nonce="{{ nonce }}">
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  try{localStorage.setItem('ra-theme',t);}catch(e){}
+  document.getElementById('btn-light').classList.toggle('on',t==='light');
+  document.getElementById('btn-dark').classList.toggle('on',t==='dark');
+}
+(function(){
+  var saved=null; try{saved=localStorage.getItem('ra-theme');}catch(e){}
+  var isDark=saved?saved==='dark':window.matchMedia('(prefers-color-scheme:dark)').matches;
+  setTheme(isDark?'dark':'light');
+})();
 function copyPrompt(){ const t=document.getElementById('kickoff');
   t.select(); document.execCommand('copy');
   document.getElementById('copybtn').textContent='Copied!';
@@ -1249,6 +1285,8 @@ document.addEventListener('click', e => {
   else if (act === 'reload') location.reload();
   else if (act === 'copy-prompt') copyPrompt();
   else if (act === 'copy-session') copySession();
+  else if (act === 'theme-light') setTheme('light');
+  else if (act === 'theme-dark') setTheme('dark');
 });
 const methFilter = document.getElementById('methfilter');
 if (methFilter) methFilter.addEventListener('keyup', () => filtMeth(methFilter.value));
@@ -1603,8 +1641,7 @@ def company(slug):
     suggested = set(suggest_methodologies(agency, case.get("sector", ""),
                                           case.get("entity_type", "corporate")))
     meth_rows = "".join(
-        f"""<label style="display:block; padding:3px 6px; border-radius:5px;
-              background:{'#e2f3e6' if m in selected else 'transparent'}" class="methrow">
+        f"""<label style="display:block; padding:3px 6px; border-radius:5px" class="methrow">
            <input type="checkbox" name="meth" value="{h(m)}"{' checked' if m in selected else ''}>
            {h(m)}{' <span class="badge opt">suggested</span>' if m in suggested else ''}</label>"""
         for m in sorted(all_meth, key=lambda m: (m not in selected, m not in suggested, m.lower())))
@@ -2711,7 +2748,7 @@ itself when the download finishes.</p>
         bar.style.width=s.pct+'%%';
         sub.textContent=s.total_gb? (s.done_gb+' GB of '+s.total_gb+' GB') : 'Connecting...'; }
       else { start.style.display='block'; bar.style.width='0%%';
-        line.textContent=(s.status==='failed')?'The download did not complete.':'The offline model is not on this machine.';
+        line.textContent=(s.status==='failed')?'The offline model could not be set up.':'The offline model is not on this machine.';
         sub.textContent=s.detail||'Press Download to fetch it (a partial download resumes where it stopped).'; }
       setTimeout(tick,1500);
     }).catch(function(){ setTimeout(tick,3000); });

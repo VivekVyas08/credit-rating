@@ -1,0 +1,22 @@
+{
+  "name": "Equitas Small Finance Bank Limited",
+  "agency": "CareEdge",
+  "sector": "Bank / SFB / RRB",
+  "entity_type": "bank",
+  "basis": "standalone",
+  "created": "2026-10-10T13:52:16",
+  "aliases": [
+    "ESFBL"
+  ],
+  "methodologies": [
+    "Assigning Outlook or Rating Watch to Credit Ratings.md",
+    "Criteria_Rating_Methodology_Banks_March_2025.md",
+    "Criteria_Rating_Methodology_Financial_Ratios_Financial_Sector_February_2025.md",
+    "hybrid-Instruments-issued-by-Banks-March-2025.md",
+    "Issuer_Ratings_Feb_2025.md",
+    "Policy on Default Recognition_Jan 2025.md",
+    "Rating_of_Short_Term_Instruments_Feb_2025.md"
+  ],
+  "isins": [],
+  "step12_scaling_decision": "Bank -> LENDING model built in full (pre-flight [1c]): Assumptions, Lending P&L, Balance Sheet, Capital (RWA/CRAR), Credit Ratios [formulas], Scenarios (base / MFI-type stress / tail + breakeven credit cost for CRAR 15%), Debt Breakup (funding mix, instruments, rated vs drawn), Valuation (market P/B - flexibility only). The corporate 3-statement template does not fit a lender. Tasks 1 and 3 combined into one credit-focused research note; Task 4 = 6 charts; no DCF, comps or price target (book value and capital access are the credit-relevant measures for a bank). Task 5 not run."
+}
