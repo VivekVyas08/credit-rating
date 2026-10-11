@@ -49,5 +49,6 @@
         "detail": "no same-issuer publication in the reference libraries"
       }
     ]
-  }
+  },
+  "testing": true
 }

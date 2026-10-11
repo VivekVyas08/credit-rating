@@ -16,5 +16,6 @@
   "isins": [],
   "rating_delivered": "2026-08-19T22:11:26",
   "rating_outcome": "CARE AAA; Stable on Rs 500.00 crore Tier II Bonds (ISIN INE165U08016, 7.80%, 06-02-2026 to 06-02-2036). v2, rebuilt on corrected evidence.",
-  "delivery_scope": "v2 rationale rebuilt 19-Aug-2026 after comparison against the published CareEdge rationale. v1 (CARE AA-/A1+ on bank facilities) was three notches low and against the wrong instrument - retained with a supersession banner alongside NABKISAN_Defect_Analysis_19Aug2026.md. Process changes: CLAUDE.md failure modes 25-28; preflight NBFC vocabulary probe + document date-ranking; check_sections NBFC metric set."
+  "delivery_scope": "v2 rationale rebuilt 19-Aug-2026 after comparison against the published CareEdge rationale. v1 (CARE AA-/A1+ on bank facilities) was three notches low and against the wrong instrument - retained with a supersession banner alongside NABKISAN_Defect_Analysis_19Aug2026.md. Process changes: CLAUDE.md failure modes 25-28; preflight NBFC vocabulary probe + document date-ranking; check_sections NBFC metric set.",
+  "testing": true
 }

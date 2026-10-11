@@ -16,5 +16,6 @@
   "isins": [],
   "sector_corrected_note": "intake defaulted to the manufacturing master criteria; SBI is a scheduled commercial bank - corrected 14-Aug-2026",
   "rating_delivered": "2026-08-14T17:50:26",
-  "delivery_scope": "COMPLETE: rationale, workpaper, ratio Excel, scorecard, 5-yr model. Step 1b full read done - Q1FY27 data corrected the margin narrative. Remaining: read CRISIL bank criteria end-to-end; corroborate CASA/deposits against the formal balance sheet."
+  "delivery_scope": "COMPLETE: rationale, workpaper, ratio Excel, scorecard, 5-yr model. Step 1b full read done - Q1FY27 data corrected the margin narrative. Remaining: read CRISIL bank criteria end-to-end; corroborate CASA/deposits against the formal balance sheet.",
+  "testing": true
 }

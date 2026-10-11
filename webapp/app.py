@@ -649,6 +649,9 @@ def save_case(slug: str, data: dict) -> None:
         json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
+TESTING_TAG = ' <span class="mut" style="font-size:.7em;font-weight:500">(Testing)</span>'
+
+
 def list_cases() -> list[dict]:
     cases = []
     for d in sorted(CASES_DIR.iterdir()):
@@ -1351,7 +1354,7 @@ def agency_dashboard(agency):
                   else '<span class="badge req">rating requested</span>' if c.get("rating_requested")
                   else '<span class="badge opt">pending</span>')
         rows += f"""<tr>
-          <td><a href="{url_for('company', slug=slug)}"><b>{h(c['name'])}</b></a>
+          <td><a href="{url_for('company', slug=slug)}"><b>{h(c['name'])}</b></a>{TESTING_TAG if c.get('testing') else ''}
               <div class="mut">{h(c.get('sector', c.get('entity_type','corporate').upper()))}</div></td>
           <td>{done}/{len(req)} required docs
               <div class="progress" style="max-width:140px"><i style="width:{int(done/len(req)*100)}%"></i></div></td>
@@ -1698,7 +1701,7 @@ def company(slug):
     <p><a href="{url_for('agency_dashboard', agency=agency_of(case))}">&larr; {agency_of(case)} cases</a></p>
     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap">
       <div>
-        <h1>{safe_name}</h1>
+        <h1>{safe_name}{TESTING_TAG if case.get('testing') else ''}</h1>
         <p class="mut"><span class="badge done">{h(agency_of(case))}</span>
            &middot; {h(case.get('sector', case.get('entity_type','corporate').upper()))}
            &middot; routing: {h(case.get('entity_type','corporate'))} &middot; created {h(case.get('created','')[:10])}</p>

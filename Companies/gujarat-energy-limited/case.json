@@ -20,5 +20,6 @@
   "routing_note": "sector label was 'State Government' - that is ownership, not a sector. The entity is a city gas distribution company that became an integrated energy conglomerate on 01-May-2026. Methodology list retained: CGD primary, Wholesale Trading for the gas-trading segment, Infrastructure and Consolidation for the scheme. Corrected 20-Aug-2026.",
   "rating_delivered": "2026-08-20T13:32:16",
   "rating_outcome": "CARE AAA; Stable / CARE A1+ on Rs 2,900.00 crore fund-based/non-fund-based LT/ST facilities (CareEdge published 29-Sep-2025). Drawn borrowings NIL - entire limit undrawn.",
-  "delivery_scope": "Rationale + ratio engine (11/11 tie-outs) + ratio Excel. Rated amount Rs 2,900 cr added 20-Aug-2026 from the CareEdge reference-library rationale after operator escalation - see CLAUDE.md failure mode 29. Two bases kept separate. Merged-entity debt profile not evidenced."
+  "delivery_scope": "Rationale + ratio engine (11/11 tie-outs) + ratio Excel. Rated amount Rs 2,900 cr added 20-Aug-2026 from the CareEdge reference-library rationale after operator escalation - see CLAUDE.md failure mode 29. Two bases kept separate. Merged-entity debt profile not evidenced.",
+  "testing": true
 }

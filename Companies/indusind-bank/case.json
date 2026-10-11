@@ -18,5 +18,6 @@
   "isins": [],
   "engagement_type": "surveillance",
   "sector_corrected_note": "scheduled commercial bank (private sector); financial-sector input block, NOT the corporate scorecard",
-  "step12_scaling_decision": "Bank lending model (book growth -> NII -> credit cost -> PAT), not the corporate 3-statement template, per CLAUDE.md FM35; focused on the FY26 earnings reset and FY27 recovery."
+  "step12_scaling_decision": "Bank lending model (book growth -> NII -> credit cost -> PAT), not the corporate 3-statement template, per CLAUDE.md FM35; focused on the FY26 earnings reset and FY27 recovery.",
+  "testing": true
 }

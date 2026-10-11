@@ -12,5 +12,6 @@
   ],
   "isins": [],
   "step12_scaling_decision": "Focused 5-year forward model (forward_model.py, base + stress) on the rating-driving variables - order-book/defence conversion, operating margin, and the capex-driven funding gap (failure mode 18: debt path DERIVED, not assumed) - plus the filled Rating_Scorecard. Proportionate for a CP-only, top-grade ([ICRA]A1+) stable surveillance mandate: the credit turns on order-book execution, margin and the self-funded capex programme, and the plugin's full 3-statement template would add presentation over the funding-gap arithmetic without changing any driver. Recorded 22-Sep-2026.",
-  "delivered": "2026-09-22"
+  "delivered": "2026-09-22",
+  "testing": true
 }

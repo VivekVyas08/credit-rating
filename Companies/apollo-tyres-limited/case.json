@@ -13,5 +13,6 @@
     "criteria-for-consolidation.md"
   ],
   "isins": [],
-  "step12_scaling_decision": "Focused sensitivity model on 2-3 rating-driving variables (raw-material cost pass-through, European segment margin post-Enschede closure, capex/deleveraging pace) instead of the full 5-yr 3-statement equity-research-plugin workflow. Reason: (a) established AA+-rated issuer with three years of improving financials and no distress history; (b) the single most consequential forward event (Enschede plant closure) is a COMPLETED, disclosed action, not an open multi-variable uncertainty; (c) no sector-assumptions document was supplied. See Apollo_Tyres_Sensitivity_Model_30Aug2026.md. Recorded 30-Aug-2026 per failure mode 35."
+  "step12_scaling_decision": "Focused sensitivity model on 2-3 rating-driving variables (raw-material cost pass-through, European segment margin post-Enschede closure, capex/deleveraging pace) instead of the full 5-yr 3-statement equity-research-plugin workflow. Reason: (a) established AA+-rated issuer with three years of improving financials and no distress history; (b) the single most consequential forward event (Enschede plant closure) is a COMPLETED, disclosed action, not an open multi-variable uncertainty; (c) no sector-assumptions document was supplied. See Apollo_Tyres_Sensitivity_Model_30Aug2026.md. Recorded 30-Aug-2026 per failure mode 35.",
+  "testing": true
 }

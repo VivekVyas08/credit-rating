@@ -23,5 +23,6 @@
   "rating_delivered": "2026-09-13",
   "rating_outcome": "CARE BBB+; Positive / CARE A2 (outlook revised from Stable); Rs 1,062.05 cr bank facilities (CRA-published 04-Sep-2026, issuer-unconfirmed); STANDALONE; anchor A+ less 3 notches; supersedes the 04-Sep-2026 consolidated rationale",
   "independence_note": "Duplicate of Companies/dhampur (CARE BBB+, 19-Jul-2026). Operator directed a fresh independent rating. R7 qualified: the analyst knew the prior grade. Disclosed in the workpaper s0 and minutes s3. Committee directed that one of the two folders be retired.",
-  "basis": "standalone"
+  "basis": "standalone",
+  "testing": true
 }

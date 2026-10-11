@@ -16,5 +16,6 @@
   "rating_delivered": "2026-08-19T20:12:07",
   "rating_outcome": "[ICRA]A (Stable) / [ICRA]A2+ reaffirmed; Rs 517.50 cr; committee-decided; surveillance due Jul-2027",
   "delivery_scope": "Re-validated 19-Aug-2026 against gates built after the original 18-Jul-2026 exercise. No new documents since July, so the rating view is unchanged: [ICRA]A (Stable)/[ICRA]A2+. One defect found and fixed - an unevidenced absence claim in Any other information (failure mode 20); the search is now recorded. check_sections.py now PASSES. Deliverables moved into the case folder.",
-  "routing_note": "Methodology list reduced to the Corporate Credit Rating Methodology alone, 19-Aug-2026 at operator instruction. Chemicals removed: HLE Glascoat manufactures glass-lined process equipment and serves chemical/pharma end users but is not a chemicals producer. The two ICRA policy documents (non-cooperation, default recognition) also removed from the case list."
+  "routing_note": "Methodology list reduced to the Corporate Credit Rating Methodology alone, 19-Aug-2026 at operator instruction. Chemicals removed: HLE Glascoat manufactures glass-lined process equipment and serves chemical/pharma end users but is not a chemicals producer. The two ICRA policy documents (non-cooperation, default recognition) also removed from the case list.",
+  "testing": true
 }

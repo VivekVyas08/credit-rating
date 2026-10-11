@@ -20,5 +20,6 @@
     "Assigning Outlook or Rating Watch to Credit Ratings.md"
   ],
   "isins": [],
-  "notes": "Sector corrected Bank -> NBFC on 16-Jul-2026 after verifying from IIFL Finance's own FY26 AR (NBFC-ML, CIN L67100MH1995PLC093797). Rated on a STANDALONE basis (IIFL Finance only; subsidiaries HFC/Samasta excluded) per user instruction. Bank + bank-hybrid methodologies from intake removed (scope mismatch, failure mode 4)."
+  "notes": "Sector corrected Bank -> NBFC on 16-Jul-2026 after verifying from IIFL Finance's own FY26 AR (NBFC-ML, CIN L67100MH1995PLC093797). Rated on a STANDALONE basis (IIFL Finance only; subsidiaries HFC/Samasta excluded) per user instruction. Bank + bank-hybrid methodologies from intake removed (scope mismatch, failure mode 4).",
+  "testing": true
 }

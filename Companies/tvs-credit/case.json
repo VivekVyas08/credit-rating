@@ -16,5 +16,6 @@
   "isins": [],
   "routing_corrected_note": "intake defaulted to Corporate Credit Rating Methodology; TVS Credit is an NBFC-ICC (RBI Middle Layer) per its own FY2026 AR - re-routed to the NBFC methodology 15-Aug-2026",
   "rating_delivered": "2026-08-15T16:41:14",
-  "delivery_scope": "Rationale, workpaper, ratio Excel. NOTE: 6 of 9 uploaded documents belong to Aptus Value Housing Finance (unrelated company) and were EXCLUDED - no post-FY2026 data. FY2026 AR is 27% OCR-corrupted; AUM/disbursements/stage-3 not extractable. See Workpaper s0."
+  "delivery_scope": "Rationale, workpaper, ratio Excel. NOTE: 6 of 9 uploaded documents belong to Aptus Value Housing Finance (unrelated company) and were EXCLUDED - no post-FY2026 data. FY2026 AR is 27% OCR-corrupted; AUM/disbursements/stage-3 not extractable. See Workpaper s0.",
+  "testing": true
 }

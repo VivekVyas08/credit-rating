@@ -13,5 +13,6 @@
     "930~Construction, Rating Methodology, Oct 2024.md"
   ],
   "isins": [],
-  "step12_scaling_decision": "A five-year projection (Companies/cemindia-projects-limited/forward_model.py) with base and stress cases was built, deriving the borrowing path from the working-capital funding gap (failure mode 18) rather than a term-debt schedule - correct for an order-book-backed EPC contractor with near-net-cash and only Rs 177.69 crore of long-term debt. What was NOT built is the equity-research plugin's native 3-statement workbook: the credit turns on order-book conversion, the operating margin and the working-capital cycle, and a full P&L/BS/CF template would add presentation over the funding-gap arithmetic without changing any of the three drivers. Recorded 19-Sep-2026."
+  "step12_scaling_decision": "A five-year projection (Companies/cemindia-projects-limited/forward_model.py) with base and stress cases was built, deriving the borrowing path from the working-capital funding gap (failure mode 18) rather than a term-debt schedule - correct for an order-book-backed EPC contractor with near-net-cash and only Rs 177.69 crore of long-term debt. What was NOT built is the equity-research plugin's native 3-statement workbook: the credit turns on order-book conversion, the operating margin and the working-capital cycle, and a full P&L/BS/CF template would add presentation over the funding-gap arithmetic without changing any of the three drivers. Recorded 19-Sep-2026.",
+  "testing": true
 }
