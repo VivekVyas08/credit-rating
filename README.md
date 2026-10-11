@@ -128,6 +128,12 @@ flowchart LR
 
 ## Start it
 
+Get the code (once):
+
+```bash
+git clone https://github.com/VivekVyas08/credit-rating.git
+```
+
 | System | What to do |
 |---|---|
 | **Windows** | Double-click `Start Credit Rating Tool.bat` |
