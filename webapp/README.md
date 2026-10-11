@@ -28,10 +28,11 @@ is the web-app-only subset, plus the optional packages for reading scanned PDFs.
 | **Reference Library** | Each agency's methodology papers, published rationales and the shared knowledge base, with search across all three. |
 | **Process Flow** | The rating procedure as a flowchart: phases, gates, and where each failure loops back. |
 | **Settings** | API key, Claude model, Online/Offline mode, and the code-sync status. |
-| **Mode switch** (header) | Online (Claude API) or Offline (the built-in model). It sets which engine a rating view uses. |
+| **Mode switch** (header) | Online (Claude API, the default) or Offline (the built-in model, under development). It sets which engine a rating view uses. |
 
-On first start without the offline model, every page shows a setup screen while the model
-downloads and is checked against its SHA-256; you can continue in Online mode instead.
+Online is the default, so nothing is downloaded on first start. If you switch to Offline and the
+model is not on the machine yet, every page shows a setup screen while the model downloads and is
+checked against its SHA-256; you can continue in Online mode instead.
 
 ## API key
 

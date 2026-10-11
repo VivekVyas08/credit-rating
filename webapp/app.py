@@ -708,14 +708,14 @@ def _name_matches(name: str, filename_lower: str) -> bool:
 # The words that mark a file as a deliverable rather than working scaffolding. Named once so
 # the discovery filter and the legal-name derivation below cannot drift apart.
 OUTPUT_WORDS = ("rationale", "workpaper", "research", "scorecard", "model", "valuation",
-                "chart", "spreads", "ratio")
+                "chart", "spreads", "ratio", "minutes")
 
 # Deliverables only. `.py` was added here on 01-Sep-2026 while fixing the missing-rationale
 # bug and REMOVED the same day: it filled the Output panel with compute_ratios.py,
 # fill_scorecard.py and build_spreads.py, which are the machinery that produces the
 # deliverables, not the deliverables. This panel is "rationale, workpaper & research"; the
 # scripts live in the case folder for anyone who wants them.
-OUTPUT_SUFFIXES = (".md", ".pdf", ".xlsx", ".docx", ".png")
+OUTPUT_SUFFIXES = (".md", ".pdf", ".xlsx", ".docx", ".png", ".zip")
 
 
 def derived_names(slug: str) -> set[str]:
@@ -811,12 +811,14 @@ def find_outputs(case: dict, slug: str) -> list[dict]:
             if p.name in seen:
                 continue
             seen.add(p.name)
-            kind = ("Workpaper" if "workpaper" in low
+            kind = ("Committee Minutes" if "minutes" in low
+                    else "Workpaper" if "workpaper" in low
                     else "Ratio Excel" if ("spreads" in low or "ratio" in low)
                     and p.suffix.lower() == ".xlsx"
                     else "Scorecard" if "scorecard" in low
                     else "Forecast Model" if "model" in low
                     else "Valuation" if "valuation" in low
+                    else "Charts Pack" if "chart" in low and p.suffix.lower() == ".zip"
                     else "Chart" if "chart" in low
                     else "Research Note" if "research" in low
                     else "Rating Rationale")
@@ -1304,7 +1306,7 @@ if (flow) {
 
 
 def page(title: str, body: str, active: str = ""):
-    run_mode = (_read_pref().get("run_mode") or "offline")
+    run_mode = (_read_pref().get("run_mode") or "online")
     return render_template_string(PAGE, title=title, body=body, active=active, run_mode=run_mode,
                                   nonce=_nonce())
 
@@ -2483,11 +2485,11 @@ def settings():
     sync_pill = "ok" if sync["status"] in ("ok", "updated") else "warn"
 
     # Online/offline run mode: what a bare `rate_engine.py <slug>` (no --engine) does.
-    run_mode = _read_pref().get("run_mode") or "offline"
+    run_mode = _read_pref().get("run_mode") or "online"
     mode_opts = "".join(
         '<option value="%s"%s>%s</option>' % (v, " selected" if v == run_mode else "", lbl)
         for v, lbl in (("online", "Online &mdash; Claude API (needs a key)"),
-                       ("offline", "Offline &mdash; built-in model, in-process (no key, no internet, no Ollama)")))
+                       ("offline", "Offline &mdash; built-in model, in-process (under development)")))
     if run_mode == "offline":
         primary_cmd = ("python tools/rate_engine.py &lt;case-slug&gt; --engine embedded "
                        "--with-docs --with-skills")
@@ -2696,6 +2698,8 @@ _SETUP_ENDPOINTS = {"setup", "setup_status", "setup_start", "setup_skip", "stati
 def _model_gate():
     if not app.config.get("MODEL_GATE") or app.config.get("SETUP_SKIPPED"):
         return None
+    if (_read_pref().get("run_mode") or "online") != "offline":      # Online needs no local model
+        return None
     if request.endpoint in _SETUP_ENDPOINTS:
         return None
     if _rate_engine().model_ready():
@@ -2722,6 +2726,8 @@ def setup():
         return redirect(url_for("agency_picker"))
     body = """
 <h1>Setting up the offline model</h1>
+<p class="mut"><b>Offline mode is under development.</b> Online mode (your own Anthropic API key) is
+the supported way to use the tool.</p>
 <p class="mut">The tool rates offline with a built-in model (about 5.35 GB). It is not on this
 machine yet, so it is being downloaded once. You can leave this page open - the tool opens by
 itself when the download finishes.</p>
@@ -2826,14 +2832,15 @@ if __name__ == "__main__":
     # manual kill-and-restart). Off by default: the reloader spawns a watcher child and the
     # debugger allows in-browser code execution, neither of which belongs in normal use. The
     # tool is localhost-only either way.
-    app.config["MODEL_GATE"] = True      # show the setup screen while the offline model is missing
+    app.config["MODEL_GATE"] = True      # in Offline mode, show the setup screen while the model is missing
     # On start, auto-connect with the repo (pull latest code) and, if the offline model is not on
     # this device, start downloading it in the background - so a fresh clone on any machine just
     # works. Best-effort, never blocks startup. Skip under the dev auto-reloader's watcher child (WERKZEUG_RUN_MAIN set)
     # and when RATING_NO_SYNC=1. The 5GB weights are provisioned here, not shipped in git.
     if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         try:
-            _rate_engine().provision(sync=os.environ.get("RATING_NO_SYNC") != "1")
+            _rate_engine().provision(sync=os.environ.get("RATING_NO_SYNC") != "1",
+                                     model=(_read_pref().get("run_mode") or "online") == "offline")
         except Exception as exc:                                          # noqa: BLE001
             print("[startup] provision skipped: %s" % exc)
     # Bind 127.0.0.1 by default (localhost-only); RATING_HOST=0.0.0.0 to serve from a container.

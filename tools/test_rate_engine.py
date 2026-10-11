@@ -731,6 +731,23 @@ def test_finetuned_gguf_preferred():
             os.environ["CREDITRATING_GGUF"] = old_env
 
 
+def test_default_mode_is_online():
+    """No saved choice -> Online (Claude API); only an explicit 'offline' selects the local model."""
+    import tempfile
+    print("\n[+] default run mode")
+    old_root = RE.ROOT
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            RE.ROOT = Path(d)
+            (RE.ROOT / "webapp").mkdir()
+            check(RE._default_engine() == "both", "no ui_prefs.json -> online ('both')")
+            for mode, want in (("online", "both"), ("offline", "embedded")):
+                (RE.ROOT / "webapp" / "ui_prefs.json").write_text(json.dumps({"run_mode": mode}))
+                check(RE._default_engine() == want, "run_mode=%s -> %s" % (mode, want))
+    finally:
+        RE.ROOT = old_root
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -745,7 +762,8 @@ def main():
                test_ollama_success, test_ollama_request_shape, test_ollama_errors,
                test_sdk_credential_detection, test_offline_output_guards,
                test_trends_and_sync, test_model_download_check, test_skills_context_paths,
-               test_model_setup_messages, test_finetuned_gguf_preferred):
+               test_model_setup_messages, test_finetuned_gguf_preferred,
+               test_default_mode_is_online):
         fn()
     print("\n" + "=" * 78)
     if _failures:

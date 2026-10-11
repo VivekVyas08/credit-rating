@@ -2,8 +2,9 @@
 
 A workbench for producing credit-rating rationales in the style of **ICRA, CRISIL and CareEdge**.
 It combines a web app for managing cases and documents, a verified ratio engine for each case,
-mechanical delivery checks, and two ways to get a rating view: **Online** (Claude API) and
-**Offline** (a built-in model that runs on your own machine, no internet or key needed).
+mechanical delivery checks, and a rating view from **Claude** through the Anthropic API, using
+your own API key. An **Offline** mode (a built-in model that runs on your own machine) is
+**under development**; see [Online and Offline](#online-and-offline).
 
 > The output is an internal analytical exercise in an agency's format. It is not a rating issued
 > or endorsed by any credit rating agency.
@@ -52,10 +53,12 @@ flowchart TB
    insists on a password first (see [Security](#security)).
 3. **Code sync.** It runs a fast-forward-only `git pull`, so every machine stays on the latest
    code. The outcome, and the reason if it was skipped, is shown under **Settings → Code sync**.
-4. **Offline model check.** It looks for a model in `models/`, or copies one Ollama has already
-   downloaded. If there is none, it downloads the official file in the background, checks its
-   SHA-256 and only then moves it into `models/`. Until the model is ready, the tool shows a
-   setup screen with a progress bar; **Continue in Online mode instead** skips the wait.
+4. **Offline model check (Offline mode only).** In the default Online mode this step is
+   skipped and nothing is downloaded. If you switch to Offline, it looks for a model in
+   `models/`, or copies one Ollama has already downloaded. If there is none, it downloads the
+   official file in the background, checks its SHA-256 and only then moves it into `models/`.
+   Until the model is ready, the tool shows a setup screen with a progress bar;
+   **Continue in Online mode instead** skips the wait.
 
 ### How a rating request travels
 
@@ -149,14 +152,13 @@ You need **Python 3.10 or newer** (tested on 3.12 and 3.14) and **git**. The lau
 
 1. **Code sync.** The tool pulls the latest code from this repository. The result is shown under
    **Settings → Code sync**, including the reason if it could not sync.
-2. **Offline model check.** If the offline model is already on the machine, the tool opens
-   straight away. If not, it opens on a setup screen and downloads the model once (about
-   5.35 GB) with a progress bar. An interrupted download resumes where it stopped. Before the
-   file is used it is checked against its published SHA-256; a file that does not match is
-   deleted and the setup screen says so. Press
-   **Continue in Online mode instead** if you do not want to wait.
-3. **Mode.** The **Online / Offline** switch in the header chooses how a rating view is
-   produced. Offline is the default on a new machine.
+2. **Mode.** The tool starts in **Online** mode, which uses Claude through your own Anthropic
+   API key (below). Nothing large is downloaded.
+3. **Offline (under development).** The **Online / Offline** switch in the header can select
+   the built-in model instead. The first time you choose Offline, the tool opens a setup screen
+   and downloads the model once (about 5.35 GB) with a progress bar. An interrupted download
+   resumes where it stopped, and the file is checked against its published SHA-256 before use.
+   Offline mode works but is still being developed; see [Online and Offline](#online-and-offline).
 
 Online mode needs an Anthropic API key. It is stored on your machine, never in this repository:
 
@@ -204,7 +206,9 @@ The rationale, workpaper and workbooks appear on the case page as they are produ
 
 ## Online and Offline
 
-| | Online | Offline |
+**Online is the default and the supported mode. Offline is under development.**
+
+| | Online | Offline (under development) |
 |---|---|---|
 | Model | Claude, through the Anthropic API | Built-in model, run on your machine |
 | Needs | API key and internet | Nothing after the one-time model download |
@@ -288,8 +292,8 @@ Figures still come only from the verified ratio suite.
 | `Rating_Scorecard.xlsx` | The scorecard template copied into each case |
 | `Start Credit Rating Tool.bat` / `.command`, `Dockerfile` | The launchers and the container build |
 
-**Not in the repository:** PDFs, the offline model file (downloaded on first start into
-`models/`), your API key, and per-machine settings.
+**Not in the repository:** PDFs, the offline model file (downloaded into `models/` the first
+time you choose Offline mode), your API key, and per-machine settings.
 
 ## Security
 

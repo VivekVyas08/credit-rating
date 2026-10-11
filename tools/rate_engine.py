@@ -930,7 +930,7 @@ def sync_repo():
     return done("skipped", why)
 
 
-def provision(verbose=True, sync=True):
+def provision(verbose=True, sync=True, model=True):
     """On-start housekeeping so the tool works on any device: pull the latest code from the repo,
     then start fetching the offline model in the background if it is missing. The model download
     never blocks startup - the web app serves immediately and shows it on its setup screen."""
@@ -940,7 +940,8 @@ def provision(verbose=True, sync=True):
             print("[sync] %s: %s" % (st["status"], st["detail"]))
     else:
         SYNC_STATE.update(status="skipped", detail="switched off (RATING_NO_SYNC=1)")
-    start_model_setup(verbose=verbose)
+    if model:
+        start_model_setup(verbose=verbose)
 
 
 def _embedded_schema():
@@ -1233,20 +1234,19 @@ OLLAMA_DEFAULT_MODEL = _ollama_default_model()
 
 
 def _default_engine():
-    """The web Mode switch -> the default --engine: 'online' -> 'both' (scorecard + Claude API);
-    anything else -> 'embedded' (scorecard + the in-process model, no server, no key).
+    """The web Mode switch -> the default --engine: 'offline' -> 'embedded' (scorecard + the
+    in-process model); anything else, including no saved choice -> 'both' (scorecard + Claude API).
 
-    OFFLINE IS THE DEFAULT. The switch is stored in webapp/ui_prefs.json, which is machine-local
-    and not in the repo - so on a fresh clone there is no file, and the tool used to fall back to
-    online. It now starts offline everywhere until someone flips the switch on that machine."""
+    ONLINE IS THE DEFAULT (since 11-Oct-2026; offline mode is under development). The switch is
+    stored in webapp/ui_prefs.json, which is machine-local and not in the repo."""
     try:
         rm = json.loads((ROOT / "webapp" / "ui_prefs.json")
                         .read_text(encoding="utf-8")).get("run_mode")
-        if rm == "online":
-            return "both"
+        if rm == "offline":
+            return "embedded"
     except Exception:                                                     # noqa: BLE001
         pass
-    return "embedded"
+    return "both"
 
 
 def ollama_models(url=OLLAMA_DEFAULT_URL, timeout=4):
